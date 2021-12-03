@@ -1,22 +1,46 @@
 use super::*;
 
-pub trait ParserExt: Sized + Parser {
-    fn and<P2: Parser>(self, parser: P2) -> And<Self, P2>;
-    fn or<P2: Parser<Output = Self::Output>>(self, parser: P2) -> Or<Self, P2>;
+pub trait ParserCombiExt: Sized + Parser {
+    /// Evaluates two parsers sequentially, and returns a tuple of their outputs
+    fn and<P2: Parser>(self, parser: P2) -> And<Self, P2> {
+        And(self, parser)
+    }
+    /// Evaluates two parsers sequentially, returns the output of the second
+    fn then<P2: Parser>(self, parser: P2) -> Then<Self, P2> {
+        Then(self, parser)
+    }
+    /// Evaluates two parsers sequentially, returns the output of the first
+    fn trailed<P2: Parser>(self, parser: P2) -> Trailed<Self, P2> {
+        Trailed(self, parser)
+    }
+
+    /// Attempts the first parser, and upon failure attempts the second parser
+    fn or<P2: Parser<Output = Self::Output>>(self, parser: P2) -> Or<Self, P2> {
+        Or(self, parser)
+    }
+
+    /// Takes the output of one parser, and transforms it into another
+    fn map<T, F: Fn(Self::Output) -> T>(self, f: F) -> Map<Self, F> {
+        Map(self, f)
+    }
+
+    /// Attempts to apply this parser, upon success, wraps the value in Some,
+    /// upon failure, succeeds with value None and no input consumed.
+    fn opt(self) -> Opt<Self> {
+        Opt(self)
+    }
 }
 
 pub struct And<P1, P2>(P1, P2);
+pub struct Then<P1, P2>(P1, P2);
+pub struct Trailed<P1, P2>(P1, P2);
 pub struct Or<P1, P2>(P1, P2);
 
-impl<P1: Parser> ParserExt for P1 {
-    fn and<P2: Parser>(self, parser: P2) -> And<P1, P2> {
-        And(self, parser)
-    }
+pub struct Map<P, F>(P, F);
 
-    fn or<P2: Parser<Output = P1::Output>>(self, parser: P2) -> Or<P1, P2> {
-        Or(self, parser)
-    }
-}
+pub struct Opt<P>(P);
+
+impl<P1: Parser> ParserCombiExt for P1 {}
 
 impl<P1: Parser, P2: Parser> Parser for And<P1, P2> {
     type Output = (P1::Output, P2::Output);
@@ -28,10 +52,50 @@ impl<P1: Parser, P2: Parser> Parser for And<P1, P2> {
     }
 }
 
+impl<P1: Parser, P2: Parser> Parser for Then<P1, P2> {
+    type Output = P2::Output;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        let (_, remainder) = self.0.parse(input)?;
+        self.1.parse(remainder)
+    }
+}
+
+impl<P1: Parser, P2: Parser> Parser for Trailed<P1, P2> {
+    type Output = P1::Output;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        let (output, remainder) = self.0.parse(input)?;
+        let (_, remainder) = self.1.parse(remainder)?;
+        Ok((output, remainder))
+    }
+}
+
 impl<P1: Parser, P2: Parser<Output = P1::Output>> Parser for Or<P1, P2> {
     type Output = P1::Output;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
         self.0.parse(input).or_else(|_| self.1.parse(input))
+    }
+}
+
+impl<P: Parser, T, F: Fn(P::Output) -> T> Parser for Map<P, F> {
+    type Output = T;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, T> {
+        self.0
+            .parse(input)
+            .map(|(value, remainder)| ((self.1)(value), remainder))
+    }
+}
+
+impl<P: Parser> Parser for Opt<P> {
+    type Output = Option<P::Output>;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        Ok(match self.0.parse(input) {
+            Ok((value, remainder)) => (Some(value), remainder),
+            _ => (None, input),
+        })
     }
 }

@@ -1,11 +1,6 @@
 use crate::prelude::*;
 day!(1, parse => pt1, pt2);
 
-fn parse(input: &str) -> ParseResult<Vec<u32>> {
-    use parsers::*;
-    sep_by(token('\n'), parse_u32).parse(input)
-}
-
 fn pt1(input: &[u32]) -> usize {
     input
         .iter()
@@ -22,4 +17,25 @@ fn pt2(input: &[u32]) -> usize {
         .tuple_windows()
         .filter(|&(a, b)| b > a)
         .count()
+}
+
+fn parse(input: &str) -> ParseResult<Vec<u32>> {
+    use parsers::*;
+    number_u32.sep_by(token('\n')).parse(input)
+}
+
+tests! {
+    const EXAMPLE: &'static str = "\
+199
+200
+208
+210
+200
+207
+240
+269
+260
+263";
+    simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 7);
+    simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 5);
 }

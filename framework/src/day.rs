@@ -1,5 +1,5 @@
-use crate::parsers::ParseResult;
-use anyhow::{anyhow, Result};
+use crate::parsers::{error::Finish, ParseResult};
+use anyhow::Result;
 use std::{fmt::Display, marker::PhantomData};
 
 #[macro_export]
@@ -14,6 +14,39 @@ macro_rules! day {
                 phantom1: ::std::marker::PhantomData,
                 phantom2: ::std::marker::PhantomData,
             }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! tests {
+    ($($x:tt)*) => {
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+            use $crate::simple_tests;
+
+            $($x)*
+        }
+    };
+}
+
+pub use paste::paste;
+
+#[macro_export]
+macro_rules! simple_tests {
+    ($parse:expr, $pt:expr, $pt_name:ident, $($input:expr => $expected:expr),+$(,)*) => {
+        #[test]
+        fn $pt_name() -> ::anyhow::Result<()> {
+            $({
+                let input = $crate::parsers::error::Finish::finish($parse($input))?;
+                let result = $crate::day::IntoResult::into_result($pt(&input))?;
+                let expected = $expected;
+                if result != expected {
+                    return Err(anyhow::anyhow!("Expected: {expected}, but got: {result}"));
+                }
+            })+
+            Ok(())
         }
     };
 }
@@ -35,18 +68,35 @@ pub trait Day {
 pub auto trait IsNotResult {}
 impl<T, E> !IsNotResult for std::result::Result<T, E> {}
 pub trait IntoResult {
-    fn into_result(self) -> Result<String, anyhow::Error>;
+    type Output;
+    fn into_result(self) -> Result<Self::Output, anyhow::Error>;
 }
 
-impl<T: Display> IntoResult for Result<T, anyhow::Error> {
-    fn into_result(self) -> Result<String, anyhow::Error> {
-        self.map(|x| x.to_string())
+impl<T> IntoResult for Result<T, anyhow::Error> {
+    type Output = T;
+    fn into_result(self) -> Result<T, anyhow::Error> {
+        self
     }
 }
 
-impl<T: IsNotResult + Display> IntoResult for T {
-    fn into_result(self) -> Result<String, anyhow::Error> {
-        Ok(self.to_string())
+impl<T: IsNotResult> IntoResult for T {
+    type Output = T;
+    fn into_result(self) -> Result<T, anyhow::Error> {
+        Ok(self)
+    }
+}
+
+pub trait IntoDisplayResult {
+    fn into_display_result(self) -> Result<String, anyhow::Error>;
+}
+
+impl<T> IntoDisplayResult for T
+where
+    T: IntoResult,
+    T::Output: Display,
+{
+    fn into_display_result(self) -> Result<String, anyhow::Error> {
+        self.into_result().map(|x| x.to_string())
     }
 }
 
@@ -58,8 +108,8 @@ where
     I: AsRef<I1> + AsRef<I2>,
     I1: ?Sized,
     I2: ?Sized,
-    O1: IntoResult,
-    O2: IntoResult,
+    O1: IntoDisplayResult,
+    O2: IntoDisplayResult,
 {
     pub nr: u32,
     pub parser: P,
@@ -77,28 +127,23 @@ where
     I: AsRef<I1> + AsRef<I2>,
     I1: ?Sized,
     I2: ?Sized,
-    O1: IntoResult,
-    O2: IntoResult,
+    O1: IntoDisplayResult,
+    O2: IntoDisplayResult,
 {
     fn nr(&self) -> u32 {
         self.nr
     }
 
     fn exec(&self, input: &str) -> DayResult {
-        let input = match (self.parser)(input) {
-            Ok((x, "" | "\n")) => x,
-            Ok((_, remainder)) => {
-                return DayResult::ParseFailed(anyhow!("Incomplete, remainder: {remainder}"))
-            }
-            Err((e, remainder)) => {
-                return DayResult::ParseFailed(anyhow!("Error: {e}, remainder: {remainder}"))
-            }
+        let input = match (self.parser)(input).finish() {
+            Ok(x) => x,
+            Err(e) => return DayResult::ParseFailed(e),
         };
         let pt1 = (self.pt1)(input.as_ref());
         let pt2 = (self.pt2)(input.as_ref());
         DayResult::Ran {
-            pt1: pt1.into_result(),
-            pt2: pt2.into_result(),
+            pt1: pt1.into_display_result(),
+            pt2: pt2.into_display_result(),
         }
     }
 }

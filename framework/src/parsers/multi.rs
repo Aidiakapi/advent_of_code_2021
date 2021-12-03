@@ -1,12 +1,74 @@
 use super::*;
 
-#[derive(Debug, Clone, Copy)]
-pub struct SepBy<S, P> {
-    separator: S,
-    parser: P,
+pub trait ParserMultiExt: Sized + Parser {
+    /// Repeatedly applies the parser, interspersing applications of `separator`.
+    /// Fails if parser cannot be applied at least once.
+    fn sep_by<S>(self, separator: S) -> SepBy<Self, S>
+    where
+        S: Parser,
+    {
+        SepBy {
+            parser: self,
+            separator,
+        }
+    }
+
+    /// Repeatedly applies the parser, repeatedly invoking `func` with the
+    /// output value, updating the accumulator which starts out as `initial`.
+    fn fold<A, F>(self, initial: A, func: F) -> Fold<Self, A, F>
+    where
+        A: Clone,
+        F: Fn(A, Self::Output) -> A,
+    {
+        Fold {
+            parser: self,
+            initial,
+            func,
+        }
+    }
+
+    /// Repeatedly applies the parser, repeatedly invoking `func` with the
+    /// output value, updating the accumulator which starts out as `initial`.
+    fn fold_mut<A, F>(self, initial: A, func: F) -> FoldMut<Self, A, F>
+    where
+        A: Clone,
+        F: Fn(&mut A, Self::Output),
+    {
+        FoldMut {
+            parser: self,
+            initial,
+            func,
+        }
+    }
 }
 
-impl<S: Parser, P: Parser> Parser for SepBy<S, P> {
+impl<P: Parser> ParserMultiExt for P {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SepBy<P, S> {
+    parser: P,
+    separator: S,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Fold<P, A, F> {
+    parser: P,
+    initial: A,
+    func: F,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct FoldMut<P, A, F> {
+    parser: P,
+    initial: A,
+    func: F,
+}
+
+impl<P, S> Parser for SepBy<P, S>
+where
+    P: Parser,
+    S: Parser,
+{
     type Output = Vec<P::Output>;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
@@ -29,6 +91,40 @@ impl<S: Parser, P: Parser> Parser for SepBy<S, P> {
     }
 }
 
-pub fn sep_by<S: Parser, P: Parser>(separator: S, parser: P) -> SepBy<S, P> {
-    SepBy { separator, parser }
+impl<P, A, F> Parser for Fold<P, A, F>
+where
+    P: Parser,
+    A: Clone,
+    F: Fn(A, P::Output) -> A,
+{
+    type Output = A;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        let mut accumulator = self.initial.clone();
+        let mut remainder = input;
+        while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
+            accumulator = (self.func)(accumulator, value);
+            remainder = new_remainder;
+        }
+        Ok((accumulator, remainder))
+    }
+}
+
+impl<P, A, F> Parser for FoldMut<P, A, F>
+where
+    P: Parser,
+    A: Clone,
+    F: Fn(&mut A, P::Output),
+{
+    type Output = A;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        let mut accumulator = self.initial.clone();
+        let mut remainder = input;
+        while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
+            (self.func)(&mut accumulator, value);
+            remainder = new_remainder;
+        }
+        Ok((accumulator, remainder))
+    }
 }

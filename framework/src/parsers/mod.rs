@@ -1,15 +1,12 @@
 mod combi;
 mod common;
-mod error;
+pub mod error;
 mod multi;
 
-pub use combi::*;
+pub use combi::ParserCombiExt;
 pub use common::*;
-pub use error::ParseError;
-pub use multi::*;
-
-pub type ParseResult<'s, T> = Result<(T, &'s str), (ParseError, &'s str)>;
-// pub trait Parser<'s, T> = Fn(&'s str) -> ParseResult<'s, T>;
+pub use error::{ParseError, ParseResult};
+pub use multi::ParserMultiExt;
 
 pub trait Parser {
     type Output;

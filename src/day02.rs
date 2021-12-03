@@ -10,15 +10,6 @@ pub enum Direction {
 
 type Instruction = (Direction, u32);
 
-fn parse(input: &str) -> ParseResult<Vec<Instruction>> {
-    use parsers::*;
-    let direction = token(("forward ", Direction::Forward))
-        .or(token(("down ", Direction::Down)))
-        .or(token(("up ", Direction::Up)));
-    let instruction = direction.and(parse_u32);
-    sep_by(token('\n'), instruction).parse(input)
-}
-
 fn pt1(input: &[Instruction]) -> i32 {
     let mut hpos = 0;
     let mut depth = 0;
@@ -49,4 +40,25 @@ fn pt2(input: &[Instruction]) -> i32 {
         }
     }
     hpos * depth
+}
+
+fn parse(input: &str) -> ParseResult<Vec<Instruction>> {
+    use parsers::*;
+    let direction = token(("forward ", Direction::Forward))
+        .or(token(("down ", Direction::Down)))
+        .or(token(("up ", Direction::Up)));
+    let instruction = direction.and(number_u32);
+    instruction.sep_by(token('\n')).parse(input)
+}
+
+tests! {
+    const EXAMPLE: &'static str = "\
+forward 5
+down 5
+forward 8
+up 3
+down 8
+forward 2";
+    simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 150);
+    simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 900);
 }
