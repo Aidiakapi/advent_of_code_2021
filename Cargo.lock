@@ -7,6 +7,7 @@ name = "advent_of_code_2021"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "colored",
  "framework",
  "itertools",
 ]
@@ -93,6 +94,7 @@ dependencies = [
  "colored",
  "paste",
  "thiserror",
+ "tinyvec",
  "ureq",
 ]
 

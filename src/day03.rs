@@ -1,7 +1,7 @@
 use crate::prelude::*;
 day!(3, parse => pt1::<12>, pt2::<12>);
 
-fn pt1<const BIT_COUNT: usize>(input: &[usize]) -> usize {
+fn pt1<const BIT_COUNT: usize>(input: &[usize]) -> MulSubmission<usize> {
     let mut bit_counts = [0; BIT_COUNT];
 
     for &nr in input {
@@ -20,17 +20,17 @@ fn pt1<const BIT_COUNT: usize>(input: &[usize]) -> usize {
         });
 
     let epsilon = gamma ^ ((1 << BIT_COUNT) - 1);
-    gamma * epsilon
+    MulSubmission(gamma, epsilon)
 }
 
-fn pt2<const BIT_COUNT: usize>(input: &[usize]) -> usize {
+fn pt2<const BIT_COUNT: usize>(input: &[usize]) -> MulSubmission<usize> {
     let mut temp = input.to_vec();
     let oxygen_generator_rating = pt2_compute_rating::<BIT_COUNT>(Rating::OxygenGenerator, &mut temp);
     temp.clear();
     temp.extend_from_slice(input);
     let co2_scrubber_rating = pt2_compute_rating::<BIT_COUNT>(Rating::CO2Scrubber, &mut temp);
 
-    oxygen_generator_rating * co2_scrubber_rating
+    MulSubmission(oxygen_generator_rating, co2_scrubber_rating)
 }
 
 fn parse(input: &str) -> ParseResult<Vec<usize>> {
@@ -48,17 +48,14 @@ enum Rating {
 
 fn pt2_compute_rating<const BIT_COUNT: usize>(rating: Rating, input: &mut Vec<usize>) -> usize {
     for bit in (0..BIT_COUNT).rev() {
-        let mut one_count = 0;
+        let mut ones_count = 0;
         for &nr in input.iter() {
-            one_count += (nr >> bit) & 1;
+            ones_count += (nr >> bit) & 1;
         }
-        let zero_count = input.len() - one_count;
-        let target_bit = if (one_count >= zero_count) == (rating == Rating::OxygenGenerator) {
-            1
-        } else {
-            0
-        };
-        input.drain_filter(|&mut nr| (nr >> bit) & 1 != target_bit);
+        let zeroes_count = input.len() - ones_count;
+        let kept_if = (ones_count >= zeroes_count) == (rating == Rating::OxygenGenerator);
+        let kept_if = if kept_if { 1 } else { 0 };
+        input.retain(|&nr| (nr >> bit) & 1 == kept_if);
         if input.len() == 1 {
             break;
         }
@@ -82,6 +79,6 @@ tests! {
 00010
 01010";
 
-    simple_tests!(parse, pt1::<5>, pt1_tests, EXAMPLE => 198);
-    simple_tests!(parse, pt2::<5>, pt2_tests, EXAMPLE => 230);
+    simple_tests!(parse, pt1::<5>, pt1_tests, EXAMPLE => MulSubmission(22, 9));
+    simple_tests!(parse, pt2::<5>, pt2_tests, EXAMPLE => MulSubmission(23, 10));
 }

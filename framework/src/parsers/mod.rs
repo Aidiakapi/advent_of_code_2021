@@ -2,6 +2,7 @@ mod combi;
 mod common;
 pub mod error;
 mod multi;
+pub mod special;
 
 pub use combi::ParserCombiExt;
 pub use common::*;

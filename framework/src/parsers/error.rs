@@ -13,6 +13,10 @@ pub enum ParseError {
     Overflow,
     #[error("Token does not match")]
     TokenDoesNotMatch,
+    #[error("Grid cell out of range, x: {0}, y: {0}")]
+    GridCellOutOfRange(usize, usize),
+    #[error("Expected a grid cell")]
+    ExpectedGridCell,
 }
 
 pub trait Finish<T> {
@@ -23,8 +27,8 @@ impl<T> Finish<T> for ParseResult<'_, T> {
     fn finish(self) -> Result<T> {
         match self {
             Ok((x, "" | "\n")) => Ok(x),
-            Ok((_, remainder)) => Err(anyhow!("Incomplete, remainder: {remainder}")),
-            Err((e, remainder)) => Err(anyhow!("Error: {e}, remainder: {remainder}")),
+            Ok((_, remainder)) => Err(anyhow!("Incomplete, remainder: \"{remainder}\"")),
+            Err((e, remainder)) => Err(anyhow!("Error: {e}, remainder: \"{remainder}\"")),
         }
     }
 }

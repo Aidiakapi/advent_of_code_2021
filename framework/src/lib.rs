@@ -1,13 +1,18 @@
+#![allow(incomplete_features)]
 #![feature(
-    auto_traits,
+    allocator_api,
     associated_type_bounds,
+    auto_traits,
+    derive_default_enum,
     fn_traits,
     generic_associated_types,
+    generic_const_exprs,
     negative_impls,
     never_type,
     trait_alias
 )]
 
+pub mod array;
 pub mod day;
 mod inputs;
 pub mod parsers;
@@ -52,10 +57,10 @@ pub fn run(days: &[&dyn Day]) {
         );
         fn print_result(prefix: &str, result: Result<String>) {
             print!(
-                " :: {prefix} {: >32}",
+                " :: {prefix} {: >40}",
                 match result {
-                    Ok(x) => x.bold(),
-                    Err(e) => e.to_string().red().bold(),
+                    Ok(x) => x,
+                    Err(e) => e.to_string().red().bold().to_string(),
                 }
             );
         }

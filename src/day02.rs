@@ -10,7 +10,7 @@ pub enum Direction {
 
 type Instruction = (Direction, u32);
 
-fn pt1(input: &[Instruction]) -> i32 {
+fn pt1(input: &[Instruction]) -> MulSubmission<i32> {
     let mut hpos = 0;
     let mut depth = 0;
     for &(direction, amount) in input {
@@ -21,10 +21,10 @@ fn pt1(input: &[Instruction]) -> i32 {
             Direction::Up => depth -= amount,
         }
     }
-    hpos * depth
+    MulSubmission(hpos, depth)
 }
 
-fn pt2(input: &[Instruction]) -> i32 {
+fn pt2(input: &[Instruction]) -> MulSubmission<i32> {
     let mut aim = 0;
     let mut hpos = 0;
     let mut depth = 0;
@@ -39,7 +39,7 @@ fn pt2(input: &[Instruction]) -> i32 {
             Direction::Up => aim -= amount,
         }
     }
-    hpos * depth
+    MulSubmission(hpos, depth)
 }
 
 fn parse(input: &str) -> ParseResult<Vec<Instruction>> {
@@ -59,6 +59,6 @@ forward 8
 up 3
 down 8
 forward 2";
-    simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 150);
-    simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 900);
+    simple_tests!(parse, pt1, pt1_tests, EXAMPLE => MulSubmission(15, 10));
+    simple_tests!(parse, pt2, pt2_tests, EXAMPLE => MulSubmission(15, 60));
 }
