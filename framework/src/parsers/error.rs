@@ -5,18 +5,20 @@ pub type ParseResult<'s, T> = Result<(T, &'s str), (ParseError, &'s str)>;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum ParseError {
-    #[error("Empty input")]
+    #[error("empty input")]
     EmptyInput,
-    #[error("Expected a digit")]
+    #[error("expected a digit")]
     ExpectedDigit,
-    #[error("Overflow")]
+    #[error("overflow")]
     Overflow,
-    #[error("Token does not match")]
+    #[error("token does not match")]
     TokenDoesNotMatch,
-    #[error("Grid cell out of range, x: {0}, y: {0}")]
+    #[error("grid cell out of range, x: {0}, y: {0}")]
     GridCellOutOfRange(usize, usize),
-    #[error("Expected a grid cell")]
+    #[error("expected a grid cell")]
     ExpectedGridCell,
+    #[error("{0}")]
+    Custom(&'static str),
 }
 
 pub trait Finish<T> {
@@ -27,8 +29,8 @@ impl<T> Finish<T> for ParseResult<'_, T> {
     fn finish(self) -> Result<T> {
         match self {
             Ok((x, "" | "\n")) => Ok(x),
-            Ok((_, remainder)) => Err(anyhow!("Incomplete, remainder: \"{remainder}\"")),
-            Err((e, remainder)) => Err(anyhow!("Error: {e}, remainder: \"{remainder}\"")),
+            Ok((_, remainder)) => Err(anyhow!("incomplete, remainder: \"{remainder}\"")),
+            Err((e, remainder)) => Err(anyhow!("{e}, remainder: \"{remainder}\"")),
         }
     }
 }

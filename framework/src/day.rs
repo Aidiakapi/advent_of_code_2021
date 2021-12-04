@@ -56,8 +56,8 @@ pub enum DayResult {
     NoInput(anyhow::Error),
     ParseFailed(anyhow::Error),
     Ran {
-        pt1: Result<String>,
-        pt2: Result<String>,
+        pt1: Result<ColoredOutput>,
+        pt2: Result<ColoredOutput>,
     },
 }
 
@@ -90,13 +90,21 @@ impl<T: IsNotResult> ToResult for T {
 pub auto trait AutoImplementToColoredString {}
 
 pub trait ToColoredString {
-    fn to_colored(self) -> String;
+    fn to_colored(self) -> ColoredOutput;
 }
 
 impl<T: Display + AutoImplementToColoredString> ToColoredString for T {
-    fn to_colored(self) -> String {
-        self.to_string().bold().to_string()
+    fn to_colored(self) -> ColoredOutput {
+        ColoredOutput {
+            str: self.to_string().white().bold().to_string(),
+            control_char_count: 11,
+        }
     }
+}
+
+pub struct ColoredOutput {
+    pub str: String,
+    pub control_char_count: usize,
 }
 
 pub struct DayCommon<P, P1, P2, I, I1, I2, O1, O2>
