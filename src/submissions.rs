@@ -1,5 +1,5 @@
 use colored::Colorize;
-use framework::day::ToColoredString;
+use framework::day::{AutoImplementToColoredString, ToColoredString};
 use std::{
     fmt::Display,
     ops::{Add, Mul},
@@ -14,6 +14,23 @@ macro_rules! impl_submission {
                 let result = self.0.clone().$op_fn(self.1.clone()).to_string().bold();
                 format!($fmt, self.0, self.1, result)
             }
+        }
+
+        impl<T: Clone + Display + $op_trait<Output = T>> Display for $name<T> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(
+                    f,
+                    $fmt,
+                    self.0,
+                    self.1,
+                    self.0.clone().$op_fn(self.1.clone())
+                )
+            }
+        }
+
+        impl<T: Clone + Display + $op_trait<Output = T>> !AutoImplementToColoredString
+            for $name<T>
+        {
         }
     };
 }

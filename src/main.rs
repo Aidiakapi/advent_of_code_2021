@@ -1,4 +1,4 @@
-#![feature(never_type)]
+#![feature(negative_impls, never_type)]
 
 mod prelude;
 mod submissions;

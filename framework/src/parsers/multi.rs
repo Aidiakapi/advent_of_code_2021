@@ -40,6 +40,12 @@ pub trait ParserMultiExt: Sized + Parser {
             func,
         }
     }
+
+    /// Repeatedly applies the parser, until failure, returning the last
+    /// successful output, or an error if it fails to apply even once.
+    fn repeat(self) -> Repeat<Self> {
+        Repeat { parser: self }
+    }
 }
 
 impl<P: Parser> ParserMultiExt for P {}
@@ -62,6 +68,11 @@ pub struct FoldMut<P, A, F> {
     parser: P,
     initial: A,
     func: F,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Repeat<P> {
+    parser: P,
 }
 
 impl<P, S> Parser for SepBy<P, S>
@@ -126,5 +137,22 @@ where
             remainder = new_remainder;
         }
         Ok((accumulator, remainder))
+    }
+}
+
+impl<P> Parser for Repeat<P>
+where P:Parser {
+    type Output = P::Output;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        let (mut last_value, mut remainder) = match self.parser.parse(input) {
+            Ok(x) => x,
+            Err(e) => return Err(e),
+        };
+        while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
+            last_value = value;
+            remainder = new_remainder;
+        }
+        Ok((last_value, remainder))
     }
 }

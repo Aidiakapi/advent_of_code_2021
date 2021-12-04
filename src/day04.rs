@@ -83,7 +83,7 @@ fn pt2(input: &Input) -> Result<MulSubmission<u32>> {
 fn parse(input: &str) -> ParseResult<Input> {
     use parsers::{special::grid, *};
     let numbers = number_u32.sep_by(token(',')).trailed(token("\n\n"));
-    let bingo_digit = token("  ").or(token(' ')).opt().then(number_u32);
+    let bingo_digit = token(' ').repeat().opt().then(number_u32);
     let bingo_board = grid(token('\n'), bingo_digit, |x, y, value| Some((x, y, value)));
     let bingo_boards = bingo_board.sep_by(token('\n'));
     let parser = numbers

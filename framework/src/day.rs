@@ -41,7 +41,7 @@ macro_rules! simple_tests {
         fn $pt_name() -> ::anyhow::Result<()> {
             $({
                 let input = $crate::parsers::error::Finish::finish($parse($input))?;
-                let result = $crate::day::IntoResult::into_result($pt(&input))?;
+                let result = $crate::day::ToResult::to_result($pt(&input))?;
                 let expected = $expected;
                 if result != expected {
                     return Err(anyhow::anyhow!("Expected: {expected}, but got: {result}"));
@@ -87,11 +87,13 @@ impl<T: IsNotResult> ToResult for T {
     }
 }
 
+pub auto trait AutoImplementToColoredString {}
+
 pub trait ToColoredString {
     fn to_colored(self) -> String;
 }
 
-impl<T: Display> ToColoredString for T {
+impl<T: Display + AutoImplementToColoredString> ToColoredString for T {
     fn to_colored(self) -> String {
         self.to_string().bold().to_string()
     }
