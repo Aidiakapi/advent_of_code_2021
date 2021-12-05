@@ -1,7 +1,11 @@
-use std::{ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
-    Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
-}, fmt::Display};
+use std::{
+    fmt::Display,
+    ops::{
+        Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
+        DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
+        SubAssign,
+    },
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Vec2<T> {
@@ -12,15 +16,18 @@ pub struct Vec2<T> {
 pub type Vec2u = Vec2<usize>;
 pub type Vec2i = Vec2<isize>;
 
-impl<T> From<(T, T)> for Vec2<T> {
-    fn from((x, y): (T, T)) -> Self {
-        Vec2 { x, y }
+impl<F, I: From<F>> From<(F, F)> for Vec2<I> {
+    fn from((x, y): (F, F)) -> Self {
+        Vec2 {
+            x: x.into(),
+            y: y.into(),
+        }
     }
 }
 
-impl<T> From<Vec2<T>> for (T, T) {
-    fn from(Vec2 { x, y }: Vec2<T>) -> Self {
-        (x, y)
+impl<F, I: From<F>> From<Vec2<F>> for (I, I) {
+    fn from(Vec2 { x, y }: Vec2<F>) -> Self {
+        (x.into(), y.into())
     }
 }
 

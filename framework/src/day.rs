@@ -1,7 +1,12 @@
 use crate::parsers::{error::Finish, ParseResult};
 use anyhow::Result;
 use colored::Colorize;
-use std::{borrow::Borrow, fmt::Display, marker::PhantomData};
+use std::{
+    borrow::Borrow,
+    fmt::Display,
+    marker::PhantomData,
+    time::{Duration, Instant},
+};
 
 #[macro_export]
 macro_rules! day {
@@ -59,9 +64,16 @@ pub enum DayResult {
     },
 }
 
+pub struct BenchOutputs {
+    pub parse: Duration,
+    pub pt1: Duration,
+    pub pt2: Duration,
+}
+
 pub trait Day {
     fn nr(&self) -> u32;
     fn exec(&self, input: &str) -> DayResult;
+    fn exec_bench(&self, input: &str) -> Result<BenchOutputs>;
 }
 
 pub auto trait IsNotResult {}
@@ -150,5 +162,23 @@ where
             pt1: pt1.to_result().map(|x| x.to_colored()),
             pt2: pt2.to_result().map(|x| x.to_colored()),
         }
+    }
+
+    fn exec_bench(&self, input: &str) -> Result<BenchOutputs> {
+        let start = Instant::now();
+        let parse_result = (self.parser)(input);
+        let parse = Instant::now() - start;
+
+        let input = parse_result.finish()?;
+
+        let start = Instant::now();
+        (self.pt1)(input.borrow());
+        let pt1 = Instant::now() - start;
+
+        let start = Instant::now();
+        (self.pt2)(input.borrow());
+        let pt2 = Instant::now() - start;
+
+        Ok(BenchOutputs { parse, pt1, pt2 })
     }
 }

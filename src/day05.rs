@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use std::collections::HashMap;
 
 day!(5, parse => pt1, pt2);
 
@@ -56,14 +55,23 @@ impl Iterator for LineIter {
     }
 }
 
-fn count_overlapping_points<'i, I: Iterator<Item = &'i Line> + 'i>(lines: I) -> usize {
-    let mut counts = HashMap::new();
+fn count_overlapping_points<'i, I: Iterator<Item = &'i Line> + Clone + 'i>(lines: I) -> usize {
+    let board_size: Vec2u = lines
+        .clone()
+        .flat_map(|line| [line.from, line.to])
+        .fold((0, 0), |(x, y), coord| {
+            (x.max(coord.x as usize), y.max(coord.y as usize))
+        })
+        .into();
+    let board_size = board_size + 1;
+    let mut board = vec![0; board_size.x * board_size.y];
+
     for line in lines {
         for point in line {
-            *counts.entry(point).or_insert(0) += 1;
+            board[point.x as usize * board_size.y + point.y as usize] += 1;
         }
     }
-    counts.values().filter(|&&count| count >= 2).count()
+    board.iter().filter(|&&count| count >= 2).count()
 }
 
 fn pt1(input: &[Line]) -> usize {
