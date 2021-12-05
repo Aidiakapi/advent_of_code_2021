@@ -17,9 +17,11 @@ pub mod day;
 mod inputs;
 pub mod parsers;
 pub mod prelude;
+pub mod submissions;
+pub mod vec;
 
 use anyhow::Result;
-use colored::{Colorize, ColoredString};
+use colored::{ColoredString, Colorize};
 use inputs::Inputs;
 
 use day::{Day, DayResult};
@@ -33,9 +35,7 @@ macro_rules! main {
 
         pub fn main() {
             framework::run(&[
-                $(
-                    &$day::day(),
-                )*
+                $(&$day::day(),)*
             ])
         }
     };
@@ -43,16 +43,22 @@ macro_rules! main {
 
 pub fn run(days: &[&dyn Day]) {
     println!(
-        "{} {} {} {}\n",
+        "\n🎄 {} {} {} {} 🎄\n",
         "Advent".bright_red().bold(),
         "of".bright_green(),
         "Code".blue().bold(),
         "2021".white().bold()
     );
 
+    let arg = std::env::args().skip(1).next();
+    let specific_day = arg.and_then(|x| x.parse::<u32>().ok());
+
     let mut inputs = Inputs::new();
     for &day in days {
         let day_nr = day.nr();
+        if specific_day.unwrap_or(day_nr) != day_nr {
+            continue;
+        }
         print!(
             "{} {}",
             "Day".bright_blue(),
@@ -70,13 +76,15 @@ pub fn run(days: &[&dyn Day]) {
                 control_char_count: 11,
             }
         }
-        fn format_result(result: Result<ColoredOutput>) -> ColoredOutput {
+        fn fmt_output(result: Result<ColoredOutput>) -> ColoredOutput {
             result.unwrap_or_else(err_to_str)
         }
         let (pt1_key, pt1_value, pt2_value) = match result {
             DayResult::NoInput(e) => ("no input".bright_red(), err_to_str(e), None),
             DayResult::ParseFailed(e) => ("parse error".bright_red(), err_to_str(e), None),
-            DayResult::Ran { pt1, pt2 } => ("pt1".bright_green(), format_result(pt1), Some(format_result(pt2))),
+            DayResult::Ran { pt1, pt2 } => {
+                ("pt1".bright_green(), fmt_output(pt1), Some(fmt_output(pt2)))
+            }
         };
 
         let contains_newlines = pt1_value.str.contains('\n')
@@ -98,7 +106,7 @@ pub fn run(days: &[&dyn Day]) {
                     "",
                     "",
                     before = (remaining_space + 1) / 2,
-                    after =  remaining_space / 2,
+                    after = remaining_space / 2,
                 );
             }
             println!();
@@ -110,13 +118,24 @@ pub fn run(days: &[&dyn Day]) {
             }
             println!("{:-<width$}", "", width = COLUMN_WIDTH);
         } else {
-            print!(" :: {} {: >width$}", pt1_key, pt1_value.str, width = PT_WIDHT + pt1_value.control_char_count);
+            print!(
+                " :: {} {: >width$}",
+                pt1_key,
+                pt1_value.str,
+                width = PT_WIDHT + pt1_value.control_char_count,
+            );
             if let Some(pt2_value) = pt2_value {
-                print!(" :: {} {: >width$}", "pt2".bright_green(), pt2_value.str, width = PT_WIDHT + pt2_value.control_char_count);
+                print!(
+                    " :: {} {: >width$}",
+                    "pt2".bright_green(),
+                    pt2_value.str,
+                    width = PT_WIDHT + pt2_value.control_char_count,
+                );
             }
             println!();
         }
     }
+    println!();
 }
 
 pub fn get_input(day_nr: u32) -> Result<String> {

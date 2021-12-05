@@ -1,4 +1,5 @@
 use crate::prelude::*;
+
 day!(2, parse => pt1, pt2);
 
 #[derive(Debug, Copy, Clone)]
@@ -59,6 +60,7 @@ forward 8
 up 3
 down 8
 forward 2";
+
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => MulSubmission(15, 10));
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => MulSubmission(15, 60));
 }

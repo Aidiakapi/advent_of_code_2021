@@ -32,8 +32,6 @@ macro_rules! tests {
     };
 }
 
-pub use paste::paste;
-
 #[macro_export]
 macro_rules! simple_tests {
     ($parse:expr, $pt:expr, $pt_name:ident, $($input:expr => $expected:expr),+$(,)*) => {

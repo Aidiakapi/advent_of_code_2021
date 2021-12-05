@@ -31,13 +31,20 @@ pub trait ParserCombiExt: Sized + Parser {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct And<P1, P2>(P1, P2);
+#[derive(Debug, Clone, Copy)]
 pub struct Then<P1, P2>(P1, P2);
+#[derive(Debug, Clone, Copy)]
 pub struct Trailed<P1, P2>(P1, P2);
+#[derive(Debug, Clone, Copy)]
 pub struct Or<P1, P2>(P1, P2);
 
+
+#[derive(Debug, Clone, Copy)]
 pub struct Map<P, F>(P, F);
 
+#[derive(Debug, Clone, Copy)]
 pub struct Opt<P>(P);
 
 impl<P1: Parser> ParserCombiExt for P1 {}

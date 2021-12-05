@@ -1,6 +1,6 @@
+use crate::prelude::*;
 use std::collections::HashSet;
 
-use crate::prelude::*;
 day!(4, parse => pt1, pt2);
 
 const WIDTH: usize = 5;
@@ -68,7 +68,10 @@ fn pt2(input: &Input) -> Result<MulSubmission<u32>> {
         seen_digits.insert(number);
 
         if let [last_board] = remaining_boards.as_slice() {
-            return Ok(MulSubmission(get_unmarked_sum(last_board, &seen_digits), number));
+            return Ok(MulSubmission(
+                get_unmarked_sum(last_board, &seen_digits),
+                number,
+            ));
         } else {
             remaining_boards.retain(|board| !is_bingo(board, &seen_digits));
         }
@@ -116,6 +119,7 @@ tests! {
 18  8 23 26 20
 22 11 13  6  5
  2  0 12  3  7";
+
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => MulSubmission(188, 24));
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => MulSubmission(148, 13));
 }

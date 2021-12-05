@@ -1,4 +1,5 @@
 use crate::prelude::*;
+
 day!(3, parse => pt1::<12>, pt2::<12>);
 
 fn pt1<const BIT_COUNT: usize>(input: &[usize]) -> MulSubmission<usize> {
@@ -25,7 +26,8 @@ fn pt1<const BIT_COUNT: usize>(input: &[usize]) -> MulSubmission<usize> {
 
 fn pt2<const BIT_COUNT: usize>(input: &[usize]) -> MulSubmission<usize> {
     let mut temp = input.to_vec();
-    let oxygen_generator_rating = pt2_compute_rating::<BIT_COUNT>(Rating::OxygenGenerator, &mut temp);
+    let oxygen_generator_rating =
+        pt2_compute_rating::<BIT_COUNT>(Rating::OxygenGenerator, &mut temp);
     temp.clear();
     temp.extend_from_slice(input);
     let co2_scrubber_rating = pt2_compute_rating::<BIT_COUNT>(Rating::CO2Scrubber, &mut temp);

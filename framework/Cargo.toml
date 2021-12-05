@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 colored = "2.0"
-paste = "1.0"
 thiserror = "1.0"
 tinyvec = "1.5"
 ureq = "2.3"

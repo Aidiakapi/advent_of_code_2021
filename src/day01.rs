@@ -1,4 +1,5 @@
 use crate::prelude::*;
+
 day!(1, parse => pt1, pt2);
 
 fn pt1(input: &[u32]) -> usize {
@@ -36,6 +37,7 @@ tests! {
 269
 260
 263";
+
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 7);
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 5);
 }
