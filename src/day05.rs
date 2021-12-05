@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::HashMap;
 
 day!(5, parse => pt1, pt2);
 
@@ -60,12 +60,7 @@ fn count_overlapping_points<'i, I: Iterator<Item = &'i Line> + 'i>(lines: I) -> 
     let mut counts = HashMap::new();
     for line in lines {
         for point in line {
-            match counts.entry(point) {
-                Entry::Occupied(mut s) => *s.get_mut() += 1,
-                Entry::Vacant(s) => {
-                    s.insert(1);
-                }
-            }
+            *counts.entry(point).or_insert(0) += 1;
         }
     }
     counts.values().filter(|&&count| count >= 2).count()
@@ -86,9 +81,8 @@ fn pt2(input: &[Line]) -> usize {
 fn parse(input: &str) -> ParseResult<Vec<Line>> {
     use parsers::*;
     let coord = number_usize.trailed(token(',')).and(number_usize);
-    let coord = coord.map(|(x, y)| (x as isize, y as isize));
-    let coord = coord.map(Vec2i::from);
-    let line = coord.clone().trailed(token(" -> ")).and(coord);
+    let coord = coord.map(|(x, y)| Vec2i::from((x as isize, y as isize)));
+    let line = coord.trailed(token(" -> ")).and(coord);
     let line = line.map(|(from, to)| Line { from, to });
     line.sep_by(token('\n')).parse(input)
 }
