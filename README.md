@@ -2,8 +2,7 @@
 
 My solutions for Advent of Code 2021. Written in Rust 🦀.
 
-- Clone the repository, make sure you don't have git's `autocrlf` (keep `\n`
-  line endings).
+- Clone the repository.
 - Make sure you have a nightly version of Rust (around December 2021).
 - `cargo run --release` for all days, `cargo run --release -- XX` for a specific
   day.

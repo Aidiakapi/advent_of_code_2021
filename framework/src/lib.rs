@@ -7,6 +7,9 @@
     fn_traits,
     generic_associated_types,
     generic_const_exprs,
+    maybe_uninit_array_assume_init,
+    maybe_uninit_extra,
+    maybe_uninit_uninit_array,
     negative_impls,
     never_type,
     trait_alias

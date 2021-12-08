@@ -1,3 +1,5 @@
+use std::mem::{swap, MaybeUninit};
+
 use super::*;
 
 pub trait ParserMultiExt: Sized + Parser {
@@ -46,6 +48,10 @@ pub trait ParserMultiExt: Sized + Parser {
     fn repeat(self) -> Repeat<Self> {
         Repeat { parser: self }
     }
+
+    fn many_n<const N: usize>(self) -> Many<Self, N> {
+        Many { parser: self }
+    }
 }
 
 impl<P: Parser> ParserMultiExt for P {}
@@ -72,6 +78,11 @@ pub struct FoldMut<P, A, F> {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Repeat<P> {
+    parser: P,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Many<P, const N: usize> {
     parser: P,
 }
 
@@ -141,7 +152,9 @@ where
 }
 
 impl<P> Parser for Repeat<P>
-where P:Parser {
+where
+    P: Parser,
+{
     type Output = P::Output;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
@@ -154,5 +167,46 @@ where P:Parser {
             remainder = new_remainder;
         }
         Ok((last_value, remainder))
+    }
+}
+
+impl<P: Parser, const N: usize> Parser for Many<P, N> {
+    type Output = [P::Output; N];
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        struct PartiallyInit<T, const N: usize> {
+            memory: [MaybeUninit<T>; N],
+            count: usize,
+        }
+
+        impl<T, const N: usize> Drop for PartiallyInit<T, N> {
+            fn drop(&mut self) {
+                for i in (0..self.count).rev() {
+                    unsafe {
+                        self.memory[i].assume_init_drop();
+                    }
+                }
+            }
+        }
+
+        let mut partially_init = PartiallyInit::<P::Output, N> {
+            memory: MaybeUninit::uninit_array(),
+            count: 0,
+        };
+
+        let mut remainder = input;
+        while partially_init.count < N {
+            let (value, new_remainder) = self.parser.parse(remainder)?;
+            remainder = new_remainder;
+            partially_init.memory[partially_init.count].write(value);
+            partially_init.count += 1;
+        }
+
+        let result = unsafe {
+            let mut memory = MaybeUninit::uninit_array();
+            swap(&mut memory, &mut partially_init.memory);
+            MaybeUninit::array_assume_init(memory)
+        };
+        Ok((result, remainder))
     }
 }

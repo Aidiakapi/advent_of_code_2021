@@ -21,7 +21,7 @@ impl Inputs {
         let path = format!("./inputs/{day:0>2}.txt");
         let path = Path::new(&path);
         if let Ok(input) = std::fs::read_to_string(&path) {
-            return Ok(input);
+            return Ok(input.replace("\r\n", "\n"));
         }
 
         let input = self.download(day)?;
