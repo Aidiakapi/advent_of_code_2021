@@ -81,7 +81,7 @@ fn bench_day(inputs: &mut Inputs, day: &dyn Day) {
     print!(
         "{} {}",
         "Day".bright_blue(),
-        day_nr.to_string().bright_red().bold()
+        format!("{day_nr:>2}").bright_red().bold()
     );
     let day_nr = day.nr();
     let result = inputs.get(day_nr).and_then(|input| day.exec_bench(&input));
@@ -108,7 +108,7 @@ fn exec_day(inputs: &mut Inputs, day: &dyn Day) {
     print!(
         "{} {}",
         "Day".bright_blue(),
-        day_nr.to_string().bright_red().bold()
+        format!("{day_nr:>2}").bright_red().bold()
     );
 
     let result = match inputs.get(day_nr) {
@@ -137,8 +137,8 @@ fn exec_day(inputs: &mut Inputs, day: &dyn Day) {
         } else {
             false
         };
-    const COLUMN_WIDTH: usize = 85;
-    const OVERHEAD_WIDTH: usize = 21;
+    const COLUMN_WIDTH: usize = 80;
+    const OVERHEAD_WIDTH: usize = 22;
     const PT_WIDHT: usize = (COLUMN_WIDTH - OVERHEAD_WIDTH) / 2;
     if contains_newlines {
         fn print_key(key: &ColoredString) {

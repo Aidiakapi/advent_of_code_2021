@@ -1,5 +1,5 @@
-use colored::{Colorize, Color};
 use crate::day::{AutoImplementToColoredString, ColoredOutput, ToColoredString};
+use colored::{Color, Colorize};
 use std::{
     fmt::Display,
     ops::{Add, Mul},
@@ -40,3 +40,22 @@ macro_rules! impl_submission {
 
 impl_submission!(AddSubmission, Add, add, "+");
 impl_submission!(MulSubmission, Mul, mul, "×");
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SubmissionContext<C: Display, T: Display>(pub C, pub T);
+impl<C: Display, T: Display> ToColoredString for SubmissionContext<C, T> {
+    fn to_colored(self) -> ColoredOutput {
+        let result = self.1.to_string().bold().white();
+        let op = "=>".color(SYMBOL_COLOR);
+        ColoredOutput {
+            str: format!("{} {} {}", self.0, op, result),
+            control_char_count: 20,
+        }
+    }
+}
+impl<C: Display, T: Display> Display for SubmissionContext<C, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} => {}", self.0, self.1)
+    }
+}
+impl<C: Display, T: Display> !AutoImplementToColoredString for SubmissionContext<C, T> {}

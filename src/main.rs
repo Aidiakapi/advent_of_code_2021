@@ -1,4 +1,9 @@
-#![feature(never_type, slice_group_by, stmt_expr_attributes)]
+#![feature(
+    int_abs_diff,
+    never_type,
+    slice_group_by,
+    stmt_expr_attributes
+)]
 
 mod prelude;
 
@@ -9,6 +14,7 @@ framework::main!(
     day04,
     day05,
     day06,
+    day07,
     day08,
     day10,
 );
