@@ -10,4 +10,5 @@ framework::main!(
     day05,
     day06,
     day08,
+    day10,
 );
