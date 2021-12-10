@@ -83,6 +83,22 @@ impl_sint_parsing!(i64, number_i64, u64, number_u64);
 impl_sint_parsing!(i128, number_i128, u128, number_u128);
 impl_sint_parsing!(isize, number_isize, usize, number_usize);
 
+pub struct Digit;
+pub const fn digit() -> Digit {
+    Digit
+}
+impl Parser for Digit {
+    type Output = u8;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        match input.chars().next() {
+            None => Err((ParseError::EmptyInput, input)),
+            Some(d @ '0'..='9') => Ok((d as u8 - b'0', &input[1..])),
+            Some(_) => Err((ParseError::ExpectedDigit, input)),
+        }
+    }
+}
+
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy)]
 pub struct Token<T> {
