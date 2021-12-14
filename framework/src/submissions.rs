@@ -2,7 +2,7 @@ use crate::day::{AutoImplementToColoredString, ColoredOutput, ToColoredString};
 use colored::{Color, Colorize};
 use std::{
     fmt::Display,
-    ops::{Add, Mul},
+    ops::{Add, Mul, Sub},
 };
 
 const SYMBOL_COLOR: Color = Color::BrightYellow;
@@ -39,6 +39,7 @@ macro_rules! impl_submission {
 }
 
 impl_submission!(AddSubmission, Add, add, "+");
+impl_submission!(SubSubmission, Sub, sub, "-");
 impl_submission!(MulSubmission, Mul, mul, "×");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

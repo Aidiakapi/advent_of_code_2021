@@ -155,6 +155,22 @@ pub fn token<T>(token: T) -> Token<T> {
     Token { value: token }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Any;
+impl Parser for Any {
+    type Output = char;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        match input.chars().next() {
+            Some(c) => Ok((c, &input[c.len_utf8()..])),
+            None => Err((ParseError::EmptyInput, input)),
+        }
+    }
+}
+pub fn any() -> Any {
+    Any
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

@@ -1,4 +1,5 @@
 #![feature(
+    array_windows,
     int_abs_diff,
     never_type,
     slice_group_by,
@@ -19,4 +20,5 @@ framework::main!(
     day09,
     day10,
     day11,
+    day14,
 );

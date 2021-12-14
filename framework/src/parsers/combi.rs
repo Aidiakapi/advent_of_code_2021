@@ -19,9 +19,13 @@ pub trait ParserCombiExt: Sized + Parser {
         Or(self, parser)
     }
 
-    /// Takes the output of one parser, and transforms it into another
+    /// Takes the output of one parser, and transforms it into another type
     fn map<T, F: Fn(Self::Output) -> T>(self, f: F) -> Map<Self, F> {
         Map(self, f)
+    }
+    /// Takes the output of one parser, and transforms it into a `Result` of another type
+    fn map_res<T, F: Fn(Self::Output) -> Result<T, ParseError>>(self, f: F) -> MapRes<Self, F> {
+        MapRes(self, f)
     }
 
     /// Attempts to apply this parser, upon success, wraps the value in Some,
@@ -37,12 +41,14 @@ pub struct And<P1, P2>(P1, P2);
 pub struct Then<P1, P2>(P1, P2);
 #[derive(Debug, Clone, Copy)]
 pub struct Trailed<P1, P2>(P1, P2);
+
 #[derive(Debug, Clone, Copy)]
 pub struct Or<P1, P2>(P1, P2);
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct Map<P, F>(P, F);
+#[derive(Debug, Clone, Copy)]
+pub struct MapRes<P, F>(P, F);
 
 #[derive(Debug, Clone, Copy)]
 pub struct Opt<P>(P);
@@ -93,6 +99,19 @@ impl<P: Parser, T, F: Fn(P::Output) -> T> Parser for Map<P, F> {
         self.0
             .parse(input)
             .map(|(value, remainder)| ((self.1)(value), remainder))
+    }
+}
+
+impl<P: Parser, T, F: Fn(P::Output) -> Result<T, ParseError>> Parser for MapRes<P, F> {
+    type Output = T;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, T> {
+        self.0
+            .parse(input)
+            .and_then(|(value, remainder)| match (self.1)(value) {
+                Ok(value) => Ok((value, remainder)),
+                Err(err) => Err((err, input)),
+            })
     }
 }
 

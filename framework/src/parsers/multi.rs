@@ -1,17 +1,21 @@
-use std::mem::{swap, MaybeUninit};
+use std::{
+    marker::PhantomData,
+    mem::{swap, MaybeUninit}, fmt::Debug,
+};
 
 use super::*;
 
 pub trait ParserMultiExt: Sized + Parser {
     /// Repeatedly applies the parser, interspersing applications of `separator`.
     /// Fails if parser cannot be applied at least once.
-    fn sep_by<S>(self, separator: S) -> SepBy<Self, S>
+    fn sep_by<S, C: Default + Extend<Self::Output>>(self, separator: S) -> SepBy<Self, S, C>
     where
         S: Parser,
     {
         SepBy {
             parser: self,
             separator,
+            _collection: PhantomData,
         }
     }
 
@@ -49,6 +53,15 @@ pub trait ParserMultiExt: Sized + Parser {
         Repeat { parser: self }
     }
 
+    /// Repeatedly applies the parser, until failure, returning a collection
+    /// of all successfully applied values.
+    fn repeat_into<C: Default + Extend<Self::Output>>(self) -> RepeatInto<Self, C> {
+        RepeatInto {
+            parser: self,
+            _collection: PhantomData,
+        }
+    }
+
     fn many_n<const N: usize>(self) -> Many<Self, N> {
         Many { parser: self }
     }
@@ -57,9 +70,10 @@ pub trait ParserMultiExt: Sized + Parser {
 impl<P: Parser> ParserMultiExt for P {}
 
 #[derive(Debug, Clone, Copy)]
-pub struct SepBy<P, S> {
+pub struct SepBy<P, S, C> {
     parser: P,
     separator: S,
+    _collection: PhantomData<C>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -82,21 +96,28 @@ pub struct Repeat<P> {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepeatInto<P, C> {
+    parser: P,
+    _collection: PhantomData<C>,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Many<P, const N: usize> {
     parser: P,
 }
 
-impl<P, S> Parser for SepBy<P, S>
+impl<P, S, C> Parser for SepBy<P, S, C>
 where
     P: Parser,
     S: Parser,
+    C: Default + Extend<P::Output>,
 {
-    type Output = Vec<P::Output>;
+    type Output = C;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
         let (element, mut remainder) = self.parser.parse(input)?;
-        let mut elements = Vec::new();
-        elements.push(element);
+        let mut elements = C::default();
+        elements.extend(Some(element));
         loop {
             let after_sep = match self.separator.parse(remainder) {
                 Ok((_, after_sep)) => after_sep,
@@ -105,7 +126,7 @@ where
             match self.parser.parse(after_sep) {
                 Ok((element, after_value)) => {
                     remainder = after_value;
-                    elements.push(element);
+                    elements.extend(Some(element));
                 }
                 Err(_) => return Ok((elements, remainder)),
             };
@@ -158,15 +179,28 @@ where
     type Output = P::Output;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
-        let (mut last_value, mut remainder) = match self.parser.parse(input) {
-            Ok(x) => x,
-            Err(e) => return Err(e),
-        };
+        let (mut last_value, mut remainder) = self.parser.parse(input)?;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
             last_value = value;
             remainder = new_remainder;
         }
         Ok((last_value, remainder))
+    }
+}
+
+impl<P: Parser, C: Default + Extend<P::Output>> Parser for RepeatInto<P, C> {
+    type Output = C;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+        let mut c = C::default();
+
+        let (first_value, mut remainder) = self.parser.parse(input)?;
+        c.extend(Some(first_value));
+        while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
+            c.extend(Some(value));
+            remainder = new_remainder;
+        }
+        Ok((c, remainder))
     }
 }
 
