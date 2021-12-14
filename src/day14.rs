@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use itertools::MinMaxResult;
-use std::{cell::RefCell, collections::HashMap, mem::swap};
+use std::{cell::RefCell, mem::swap};
 
 day!(14, parse => pt1, pt2);
 
@@ -8,11 +8,18 @@ type Molecule = u8;
 
 const MAX_MOLECULE_TYPE_COUNT: usize = 10;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 struct Input {
     template: Vec<Molecule>,
-    rules: HashMap<(Molecule, Molecule), Molecule>,
+    rules: Vec<Rule>,
     molecule_count: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Rule {
+    lhs: Molecule,
+    rhs: Molecule,
+    add: Molecule,
 }
 
 fn pts(input: &Input, steps: usize) -> Result<SubSubmission<u64>> {
@@ -29,15 +36,15 @@ fn pts(input: &Input, steps: usize) -> Result<SubSubmission<u64>> {
         if step_index != 0 {
             new_counts.copy_from_slice(&counts);
         }
-        for (&(a, b), &c) in &input.rules {
-            let i1 = a as usize * input.molecule_count + b as usize;
-            let i2 = a as usize * input.molecule_count + c as usize;
-            let i3 = c as usize * input.molecule_count + b as usize;
+        for rule in &input.rules {
+            let i1 = rule.lhs as usize * input.molecule_count + rule.rhs as usize;
+            let i2 = rule.lhs as usize * input.molecule_count + rule.add as usize;
+            let i3 = rule.add as usize * input.molecule_count + rule.rhs as usize;
             let count = counts[i1];
             new_counts[i1] -= count;
             new_counts[i2] += count;
             new_counts[i3] += count;
-            new_counts[overcounted_base + c as usize] += count;
+            new_counts[overcounted_base + rule.add as usize] += count;
         }
         swap(&mut counts, &mut new_counts);
     }
@@ -75,18 +82,25 @@ fn pt2(input: &Input) -> Result<u64> {
 
 fn parse(input: &str) -> ParseResult<Input> {
     use parsers::*;
-    let kind = RefCell::new(HashMap::<char, u8>::new());
+    let kind = RefCell::new(Vec::<(char, u8)>::new());
     let molecule = any().map_res(|c| {
         if c >= 'A' && c <= 'Z' {
             let mut map = kind.borrow_mut();
-            let map_len = map.len() as u8;
-            Ok(*map.entry(c).or_insert(map_len))
+            Ok(match map.iter().find(|(x, _)| *x == c) {
+                Some((_, idx)) => *idx,
+                None => {
+                    let len = map.len() as u8;
+                    map.push((c, len));
+                    len
+                }
+            })
         } else {
             Err(ParseError::TokenDoesNotMatch)
         }
     });
     let template = molecule.repeat_into();
     let rule = molecule.and(molecule).and(token(" -> ").then(molecule));
+    let rule = rule.map(|((lhs, rhs), add)| Rule { lhs, rhs, add });
     let rules = rule.sep_by(token('\n'));
     let parser = template.and(token("\n\n").then(rules));
     parser.parse(input).map(|((template, rules), rem)| {
