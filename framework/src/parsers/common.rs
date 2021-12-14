@@ -6,9 +6,9 @@ macro_rules! impl_uint_parsing {
         #[allow(non_camel_case_types)]
         pub struct $name;
         impl Parser for $name {
-            type Output = $kind;
+            type Output<'s> = $kind;
 
-            fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+            fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
                 let first_char = input
                     .chars()
                     .next()
@@ -46,9 +46,9 @@ macro_rules! impl_sint_parsing {
         #[allow(non_camel_case_types)]
         pub struct $name;
         impl Parser for $name {
-            type Output = $kind;
+            type Output<'s> = $kind;
 
-            fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+            fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
                 let (is_negative, remainder) = match input.chars().next() {
                     Some('-') => (true, &input[1..]),
                     Some('+') => (false, &input[1..]),
@@ -88,9 +88,9 @@ pub const fn digit() -> Digit {
     Digit
 }
 impl Parser for Digit {
-    type Output = u8;
+    type Output<'s> = u8;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         match input.chars().next() {
             None => Err((ParseError::EmptyInput, input)),
             Some(d @ '0'..='9') => Ok((d as u8 - b'0', &input[1..])),
@@ -106,7 +106,7 @@ pub struct Token<T> {
 }
 
 impl Parser for Token<char> {
-    type Output = ();
+    type Output<'s> = ();
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, ()> {
         if let Some(c) = input.chars().next() {
             if c == self.value {
@@ -118,7 +118,7 @@ impl Parser for Token<char> {
 }
 
 impl<T: Clone> Parser for Token<(char, T)> {
-    type Output = T;
+    type Output<'s> = T;
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, T> {
         if let Some(c) = input.chars().next() {
             if c == self.value.0 {
@@ -130,7 +130,7 @@ impl<T: Clone> Parser for Token<(char, T)> {
 }
 
 impl<'t> Parser for Token<&'t str> {
-    type Output = ();
+    type Output<'s> = ();
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, ()> {
         if input.starts_with(self.value) {
             Ok(((), &input[self.value.len()..]))
@@ -141,7 +141,7 @@ impl<'t> Parser for Token<&'t str> {
 }
 
 impl<'t, T: Clone> Parser for Token<(&'t str, T)> {
-    type Output = T;
+    type Output<'s> = T;
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, T> {
         if input.starts_with(self.value.0) {
             Ok((self.value.1.clone(), &input[self.value.0.len()..]))
@@ -158,9 +158,9 @@ pub fn token<T>(token: T) -> Token<T> {
 #[derive(Debug, Clone, Copy)]
 pub struct Any;
 impl Parser for Any {
-    type Output = char;
+    type Output<'s> = char;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         match input.chars().next() {
             Some(c) => Ok((c, &input[c.len_utf8()..])),
             None => Err((ParseError::EmptyInput, input)),

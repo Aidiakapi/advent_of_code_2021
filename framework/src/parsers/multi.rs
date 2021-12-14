@@ -1,6 +1,7 @@
 use std::{
+    fmt::Debug,
     marker::PhantomData,
-    mem::{swap, MaybeUninit}, fmt::Debug,
+    mem::{swap, MaybeUninit},
 };
 
 use super::*;
@@ -8,7 +9,7 @@ use super::*;
 pub trait ParserMultiExt: Sized + Parser {
     /// Repeatedly applies the parser, interspersing applications of `separator`.
     /// Fails if parser cannot be applied at least once.
-    fn sep_by<S, C: Default + Extend<Self::Output>>(self, separator: S) -> SepBy<Self, S, C>
+    fn sep_by<'s, S, C: Default + Extend<Self::Output<'s>>>(self, separator: S) -> SepBy<Self, S, C>
     where
         S: Parser,
     {
@@ -24,7 +25,7 @@ pub trait ParserMultiExt: Sized + Parser {
     fn fold<A, F>(self, initial: A, func: F) -> Fold<Self, A, F>
     where
         A: Clone,
-        F: Fn(A, Self::Output) -> A,
+        F: Fn(A, Self::Output<'_>) -> A,
     {
         Fold {
             parser: self,
@@ -38,7 +39,7 @@ pub trait ParserMultiExt: Sized + Parser {
     fn fold_mut<A, F>(self, initial: A, func: F) -> FoldMut<Self, A, F>
     where
         A: Clone,
-        F: Fn(&mut A, Self::Output),
+        F: Fn(&mut A, Self::Output<'_>),
     {
         FoldMut {
             parser: self,
@@ -55,7 +56,7 @@ pub trait ParserMultiExt: Sized + Parser {
 
     /// Repeatedly applies the parser, until failure, returning a collection
     /// of all successfully applied values.
-    fn repeat_into<C: Default + Extend<Self::Output>>(self) -> RepeatInto<Self, C> {
+    fn repeat_into<'s, C: Default + Extend<Self::Output<'s>>>(self) -> RepeatInto<Self, C> {
         RepeatInto {
             parser: self,
             _collection: PhantomData,
@@ -68,6 +69,38 @@ pub trait ParserMultiExt: Sized + Parser {
 }
 
 impl<P: Parser> ParserMultiExt for P {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct TakeWhile<F>(F);
+impl<F> Parser for TakeWhile<F>
+where
+    F: Fn(char) -> bool,
+{
+    type Output<'s> = &'s str;
+
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+        let mut iter = input.char_indices();
+        let (mut last_index, mut last_char) = iter.next().ok_or((ParseError::EmptyInput, input))?;
+        if !(self.0)(last_char) {
+            return Err((ParseError::UnexpectedChar, input));
+        }
+        while let Some((new_index, new_char)) = iter.next() {
+            if !(self.0)(new_char) {
+                break;
+            }
+            last_index = new_index;
+            last_char = new_char;
+        }
+        last_index += last_char.len_utf8();
+        Ok((&input[0..last_index], &input[last_index..]))
+    }
+}
+pub fn take_while<F>(f: F) -> TakeWhile<F>
+where
+    F: Fn(char) -> bool,
+{
+    TakeWhile(f)
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct SepBy<P, S, C> {
@@ -110,11 +143,11 @@ impl<P, S, C> Parser for SepBy<P, S, C>
 where
     P: Parser,
     S: Parser,
-    C: Default + Extend<P::Output>,
+    C: Default + for<'s> Extend<P::Output<'s>>,
 {
-    type Output = C;
+    type Output<'s> = C;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let (element, mut remainder) = self.parser.parse(input)?;
         let mut elements = C::default();
         elements.extend(Some(element));
@@ -138,11 +171,11 @@ impl<P, A, F> Parser for Fold<P, A, F>
 where
     P: Parser,
     A: Clone,
-    F: Fn(A, P::Output) -> A,
+    F: Fn(A, P::Output<'_>) -> A,
 {
-    type Output = A;
+    type Output<'s> = A;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let mut accumulator = self.initial.clone();
         let mut remainder = input;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
@@ -157,11 +190,11 @@ impl<P, A, F> Parser for FoldMut<P, A, F>
 where
     P: Parser,
     A: Clone,
-    F: Fn(&mut A, P::Output),
+    F: Fn(&mut A, P::Output<'_>),
 {
-    type Output = A;
+    type Output<'s> = A;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let mut accumulator = self.initial.clone();
         let mut remainder = input;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
@@ -176,9 +209,9 @@ impl<P> Parser for Repeat<P>
 where
     P: Parser,
 {
-    type Output = P::Output;
+    type Output<'s> = P::Output<'s>;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let (mut last_value, mut remainder) = self.parser.parse(input)?;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
             last_value = value;
@@ -188,10 +221,10 @@ where
     }
 }
 
-impl<P: Parser, C: Default + Extend<P::Output>> Parser for RepeatInto<P, C> {
-    type Output = C;
+impl<P: Parser, C: Default + for<'s> Extend<P::Output<'s>>> Parser for RepeatInto<P, C> {
+    type Output<'s> = C;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let mut c = C::default();
 
         let (first_value, mut remainder) = self.parser.parse(input)?;
@@ -205,9 +238,9 @@ impl<P: Parser, C: Default + Extend<P::Output>> Parser for RepeatInto<P, C> {
 }
 
 impl<P: Parser, const N: usize> Parser for Many<P, N> {
-    type Output = [P::Output; N];
+    type Output<'s> = [P::Output<'s>; N];
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         struct PartiallyInit<T, const N: usize> {
             memory: [MaybeUninit<T>; N],
             count: usize,
@@ -223,7 +256,7 @@ impl<P: Parser, const N: usize> Parser for Many<P, N> {
             }
         }
 
-        let mut partially_init = PartiallyInit::<P::Output, N> {
+        let mut partially_init = PartiallyInit::<P::Output<'s>, N> {
             memory: MaybeUninit::uninit_array(),
             count: 0,
         };

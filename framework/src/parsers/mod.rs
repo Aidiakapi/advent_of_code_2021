@@ -7,9 +7,9 @@ pub mod special;
 pub use combi::ParserCombiExt;
 pub use common::*;
 pub use error::{ParseError, ParseResult};
-pub use multi::ParserMultiExt;
+pub use multi::{ParserMultiExt, take_while};
 
 pub trait Parser {
-    type Output;
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output>;
+    type Output<'s>;
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>>;
 }

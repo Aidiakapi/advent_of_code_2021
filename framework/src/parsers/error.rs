@@ -13,6 +13,8 @@ pub enum ParseError {
     Overflow,
     #[error("token does not match")]
     TokenDoesNotMatch,
+    #[error("unexpected char")]
+    UnexpectedChar,
     #[error("grid cell out of range, x: {0}, y: {0}")]
     GridCellOutOfRange(usize, usize),
     #[error("expected a grid cell")]

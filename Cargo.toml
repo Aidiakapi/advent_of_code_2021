@@ -11,6 +11,7 @@ arrayvec = "0.7"
 colored = "2.0"
 framework = { path = "./framework" }
 itertools = "0.10"
+jagged_array = "0.2"
 
 [workspace]
 members = [

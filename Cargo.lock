@@ -11,6 +11,7 @@ dependencies = [
  "colored",
  "framework",
  "itertools",
+ "jagged_array",
 ]
 
 [[package]]
@@ -134,6 +135,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "jagged_array"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac22649279bc48ff4d5e023da032e644f7f75a4ca8c6967c24a462b72566f8d0"
+dependencies = [
+ "serde",
+ "streaming-iterator",
+ "try_opt",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -237,10 +249,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde"
+version = "1.0.131"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ad69dfbd3e45369132cc64e6748c2d65cdfb001a2b1c232d128b4ad60561c1"
+
+[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "streaming-iterator"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "303235c177994a476226b80d076bd333b7b560fb05bd242a10609d11b07f81f5"
 
 [[package]]
 name = "syn"
@@ -287,6 +311,12 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "try_opt"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d30b71e7ba40551f9873f3ba9f4ee36f16015adf0962aba57caf403088370db1"
 
 [[package]]
 name = "unicode-bidi"

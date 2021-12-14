@@ -15,16 +15,16 @@ pub trait ParserCombiExt: Sized + Parser {
     }
 
     /// Attempts the first parser, and upon failure attempts the second parser
-    fn or<P2: Parser<Output = Self::Output>>(self, parser: P2) -> Or<Self, P2> {
+    fn or<'s, P2: Parser<Output<'s> = Self::Output<'s>>>(self, parser: P2) -> Or<Self, P2> {
         Or(self, parser)
     }
 
     /// Takes the output of one parser, and transforms it into another type
-    fn map<T, F: Fn(Self::Output) -> T>(self, f: F) -> Map<Self, F> {
+    fn map<T, F: Fn(Self::Output<'_>) -> T>(self, f: F) -> Map<Self, F> {
         Map(self, f)
     }
     /// Takes the output of one parser, and transforms it into a `Result` of another type
-    fn map_res<T, F: Fn(Self::Output) -> Result<T, ParseError>>(self, f: F) -> MapRes<Self, F> {
+    fn map_res<T, F: Fn(Self::Output<'_>) -> Result<T, ParseError>>(self, f: F) -> MapRes<Self, F> {
         MapRes(self, f)
     }
 
@@ -56,9 +56,9 @@ pub struct Opt<P>(P);
 impl<P1: Parser> ParserCombiExt for P1 {}
 
 impl<P1: Parser, P2: Parser> Parser for And<P1, P2> {
-    type Output = (P1::Output, P2::Output);
+    type Output<'s> = (P1::Output<'s>, P2::Output<'s>);
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let (o1, remainder) = self.0.parse(input)?;
         let (o2, remainder) = self.1.parse(remainder)?;
         Ok(((o1, o2), remainder))
@@ -66,34 +66,34 @@ impl<P1: Parser, P2: Parser> Parser for And<P1, P2> {
 }
 
 impl<P1: Parser, P2: Parser> Parser for Then<P1, P2> {
-    type Output = P2::Output;
+    type Output<'s> = P2::Output<'s>;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let (_, remainder) = self.0.parse(input)?;
         self.1.parse(remainder)
     }
 }
 
 impl<P1: Parser, P2: Parser> Parser for Trailed<P1, P2> {
-    type Output = P1::Output;
+    type Output<'s> = P1::Output<'s>;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let (output, remainder) = self.0.parse(input)?;
         let (_, remainder) = self.1.parse(remainder)?;
         Ok((output, remainder))
     }
 }
 
-impl<P1: Parser, P2: Parser<Output = P1::Output>> Parser for Or<P1, P2> {
-    type Output = P1::Output;
+impl<P1: Parser, P2: for<'s> Parser<Output<'s> = P1::Output<'s>>> Parser for Or<P1, P2> {
+    type Output<'s> = P1::Output<'s>;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         self.0.parse(input).or_else(|_| self.1.parse(input))
     }
 }
 
-impl<P: Parser, T, F: Fn(P::Output) -> T> Parser for Map<P, F> {
-    type Output = T;
+impl<P: Parser, T, F: for<'s> Fn(P::Output<'s>) -> T> Parser for Map<P, F> {
+    type Output<'s> = T;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, T> {
         self.0
@@ -102,8 +102,8 @@ impl<P: Parser, T, F: Fn(P::Output) -> T> Parser for Map<P, F> {
     }
 }
 
-impl<P: Parser, T, F: Fn(P::Output) -> Result<T, ParseError>> Parser for MapRes<P, F> {
-    type Output = T;
+impl<P: Parser, T, F: for<'s> Fn(P::Output<'s>) -> Result<T, ParseError>> Parser for MapRes<P, F> {
+    type Output<'s> = T;
 
     fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, T> {
         self.0
@@ -116,9 +116,9 @@ impl<P: Parser, T, F: Fn(P::Output) -> Result<T, ParseError>> Parser for MapRes<
 }
 
 impl<P: Parser> Parser for Opt<P> {
-    type Output = Option<P::Output>;
+    type Output<'s> = Option<P::Output<'s>>;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         Ok(match self.0.parse(input) {
             Ok((value, remainder)) => (Some(value), remainder),
             _ => (None, input),

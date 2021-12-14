@@ -35,7 +35,7 @@ where
     T: Default,
     GS: GridSpec<T>,
     S: Parser,
-    P: Parser<Output = I>,
+    P: for<'s> Parser<Output<'s> = I>,
     FT: Fn(usize, usize, I) -> Option<(usize, usize, T)>,
 {
     Grid {
@@ -51,12 +51,12 @@ where
     T: Default,
     GS: GridSpec<T>,
     S: Parser,
-    P: Parser<Output = I>,
+    P: for<'s> Parser<Output<'s> = I>,
     FT: Fn(usize, usize, I) -> Option<(usize, usize, T)>,
 {
-    type Output = GS;
+    type Output<'s> = GS;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output> {
+    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
         let mut grid = GS::initialize();
 
         let mut set = {
