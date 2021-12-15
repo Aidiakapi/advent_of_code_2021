@@ -7,7 +7,7 @@ use std::{
     },
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Vec2<T> {
     pub x: T,
     pub y: T,

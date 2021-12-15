@@ -1,6 +1,8 @@
+#![allow(incomplete_features)]
 #![feature(
     array_windows,
     int_abs_diff,
+    generic_const_exprs,
     never_type,
     slice_group_by,
     stmt_expr_attributes
@@ -22,4 +24,5 @@ framework::main!(
     day11,
     day12,
     day14,
+    day15,
 );

@@ -16,6 +16,7 @@
 )]
 
 pub mod array;
+pub mod astar;
 pub mod day;
 mod inputs;
 pub mod parsers;
@@ -94,7 +95,11 @@ fn bench_day(inputs: &mut Inputs, day: &dyn Day) {
     };
 
     fn print_timing(label: &'static str, duration: Duration) {
-        print!(" :: {} {: >14}", label.bright_green(), format!("{duration:?}").white().bold());
+        print!(
+            " :: {} {: >14}",
+            label.bright_green(),
+            format!("{duration:?}").white().bold()
+        );
     }
 
     print_timing("parse", timings.parse);
