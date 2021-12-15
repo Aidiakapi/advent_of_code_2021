@@ -1,5 +1,6 @@
+use ahash::AHashMap;
 use std::{
-    collections::{hash_map::Entry, BinaryHeap, HashMap},
+    collections::{hash_map::Entry, BinaryHeap},
     hash::Hash,
     ops::Add,
 };
@@ -25,14 +26,14 @@ where
 {
     struct Pending<N, C: Ord + Copy + Add<Output = C> + Default> {
         cost: C,
-        heuristic: C,
+        cost_and_heuristic: C,
         node: N,
         previous: Option<N>,
     }
 
     impl<N, C: Ord + Copy + Add<Output = C> + Default> PartialEq for Pending<N, C> {
         fn eq(&self, other: &Self) -> bool {
-            (self.cost + other.heuristic) == (other.cost + other.heuristic)
+            self.cost_and_heuristic == other.cost_and_heuristic
         }
     }
     impl<N, C: Ord + Copy + Add<Output = C> + Default> Eq for Pending<N, C> {}
@@ -43,20 +44,18 @@ where
     }
     impl<N, C: Ord + Copy + Add<Output = C> + Default> Ord for Pending<N, C> {
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-            let s = self.cost + self.heuristic;
-            let o = other.cost + other.heuristic;
-            o.cmp(&s)
+            other.cost_and_heuristic.cmp(&self.cost_and_heuristic)
         }
     }
 
     let mut pending = BinaryHeap::new();
     pending.push(Pending {
         cost: C::default(),
-        heuristic: heuristic(&start),
+        cost_and_heuristic: heuristic(&start),
         node: start,
         previous: None,
     });
-    let mut visited = HashMap::<N, (C, Option<N>)>::new();
+    let mut visited = AHashMap::<N, (C, Option<N>)>::new();
     while let Some(entry) = pending.pop() {
         if is_target(&entry.node) {
             let total_cost = entry.cost;
@@ -86,9 +85,10 @@ where
             }
         }
         for (next_node, next_cost) in next(&entry.node) {
+            let cost = entry.cost + next_cost;
             pending.push(Pending {
-                cost: entry.cost + next_cost,
-                heuristic: heuristic(&next_node),
+                cost,
+                cost_and_heuristic: cost + heuristic(&next_node),
                 node: next_node,
                 previous: Some(entry.node.clone()),
             });
@@ -113,13 +113,13 @@ where
 {
     struct Pending<N, C: Ord + Copy + Add<Output = C> + Default> {
         cost: C,
-        heuristic: C,
+        cost_and_heuristic: C,
         node: N,
     }
 
     impl<N, C: Ord + Copy + Add<Output = C> + Default> PartialEq for Pending<N, C> {
         fn eq(&self, other: &Self) -> bool {
-            (self.cost + other.heuristic) == (other.cost + other.heuristic)
+            self.cost_and_heuristic == other.cost_and_heuristic
         }
     }
     impl<N, C: Ord + Copy + Add<Output = C> + Default> Eq for Pending<N, C> {}
@@ -130,19 +130,17 @@ where
     }
     impl<N, C: Ord + Copy + Add<Output = C> + Default> Ord for Pending<N, C> {
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-            let s = self.cost + self.heuristic;
-            let o = other.cost + other.heuristic;
-            o.cmp(&s)
+            other.cost_and_heuristic.cmp(&self.cost_and_heuristic)
         }
     }
 
     let mut pending = BinaryHeap::new();
     pending.push(Pending {
         cost: C::default(),
-        heuristic: heuristic(&start),
+        cost_and_heuristic: heuristic(&start),
         node: start,
     });
-    let mut visited = HashMap::<N, C>::new();
+    let mut visited = AHashMap::<N, C>::new();
     while let Some(entry) = pending.pop() {
         if is_target(&entry.node) {
             return Some(entry.cost);
@@ -160,9 +158,10 @@ where
             }
         }
         for (next_node, next_cost) in next(&entry.node) {
+            let cost = entry.cost + next_cost;
             pending.push(Pending {
-                cost: entry.cost + next_cost,
-                heuristic: heuristic(&next_node),
+                cost,
+                cost_and_heuristic: cost + heuristic(&next_node),
                 node: next_node,
             });
         }

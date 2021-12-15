@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::collections::HashSet;
+use ahash::AHashSet;
 
 day!(4, parse => pt1, pt2);
 
@@ -13,7 +13,7 @@ struct Input {
     bingo_boards: Vec<BingoBoard>,
 }
 
-fn is_bingo(board: &BingoBoard, seen_digits: &HashSet<u32>) -> bool {
+fn is_bingo(board: &BingoBoard, seen_digits: &AHashSet<u32>) -> bool {
     let any_row = || {
         (0..HEIGHT).any(|y| {
             (0..WIDTH)
@@ -31,7 +31,7 @@ fn is_bingo(board: &BingoBoard, seen_digits: &HashSet<u32>) -> bool {
     any_row() || any_column()
 }
 
-fn get_unmarked_sum(board: &BingoBoard, seen_digits: &HashSet<u32>) -> u32 {
+fn get_unmarked_sum(board: &BingoBoard, seen_digits: &AHashSet<u32>) -> u32 {
     board
         .iter()
         .flat_map(|column| column.iter())
@@ -40,7 +40,7 @@ fn get_unmarked_sum(board: &BingoBoard, seen_digits: &HashSet<u32>) -> u32 {
 }
 
 fn pt1(input: &Input) -> Result<MulSubmission<u32>> {
-    let mut seen_digits = HashSet::with_capacity(input.numbers.len());
+    let mut seen_digits = AHashSet::with_capacity(input.numbers.len());
     for &number in &input.numbers {
         seen_digits.insert(number);
 
@@ -63,7 +63,7 @@ fn pt1(input: &Input) -> Result<MulSubmission<u32>> {
 fn pt2(input: &Input) -> Result<MulSubmission<u32>> {
     let mut remaining_boards = input.bingo_boards.clone();
 
-    let mut seen_digits = HashSet::with_capacity(input.numbers.len());
+    let mut seen_digits = AHashSet::with_capacity(input.numbers.len());
     for &number in &input.numbers {
         seen_digits.insert(number);
 

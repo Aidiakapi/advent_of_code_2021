@@ -1,6 +1,5 @@
-use std::collections::HashSet;
-
 use crate::prelude::*;
+use ahash::AHashSet;
 use arrayvec::ArrayVec;
 
 day!(9, parse => pt1, pt2);
@@ -40,7 +39,7 @@ fn pt1(input: &[Vec<u8>]) -> u32 {
 }
 
 fn pt2(input: &[Vec<u8>]) -> u32 {
-    let mut visited = HashSet::new();
+    let mut visited = AHashSet::new();
     let mut basin_sizes = cells(input)
         .filter(|&(p, nr)| neighbors(p, input).iter().all(|&np| input[np.y][np.x] > nr))
         .map(|(p, _)| get_basin_size(p, input, &mut visited))
@@ -49,8 +48,8 @@ fn pt2(input: &[Vec<u8>]) -> u32 {
     basin_sizes[basin_sizes.len() - 3..].iter().product()
 }
 
-fn get_basin_size(p: Vec2u, input: &[Vec<u8>], visited: &mut HashSet<Vec2u>) -> u32 {
-    fn visit(p: Vec2u, input: &[Vec<u8>], visited: &mut HashSet<Vec2u>, size: &mut u32) {
+fn get_basin_size(p: Vec2u, input: &[Vec<u8>], visited: &mut AHashSet<Vec2u>) -> u32 {
+    fn visit(p: Vec2u, input: &[Vec<u8>], visited: &mut AHashSet<Vec2u>, size: &mut u32) {
         if !visited.insert(p) {
             return;
         }

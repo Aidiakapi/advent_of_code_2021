@@ -1,5 +1,6 @@
 use crate::prelude::*;
-use std::{collections::HashSet, mem::swap};
+use ahash::AHashSet;
+use std::mem::swap;
 
 day!(13, parse => pt1, pt2);
 
@@ -17,7 +18,7 @@ enum Direction {
     Y,
 }
 
-fn fold_paper<I>(points: I, folded: &mut HashSet<Vec2u>, &(direction, line): &Fold)
+fn fold_paper<I>(points: I, folded: &mut AHashSet<Vec2u>, &(direction, line): &Fold)
 where
     I: IntoIterator<Item = Vec2u>,
 {
@@ -46,7 +47,7 @@ where
     }
 }
 
-fn paper_to_string(points: &HashSet<Vec2u>) -> String {
+fn paper_to_string(points: &AHashSet<Vec2u>) -> String {
     let w = points.iter().map(|p| p.x).max().unwrap() + 1;
     let h = points.iter().map(|p| p.y).max().unwrap() + 1;
     let mut res = String::with_capacity((w + 1) * h);
@@ -65,14 +66,14 @@ fn paper_to_string(points: &HashSet<Vec2u>) -> String {
 }
 
 fn pt1(input: &Input) -> usize {
-    let mut points = HashSet::with_capacity(input.points.len());
+    let mut points = AHashSet::with_capacity(input.points.len());
     fold_paper(input.points.iter().cloned(), &mut points, &input.folds[0]);
     points.len()
 }
 
 fn pt2(input: &Input) -> String {
-    let mut points = HashSet::from_iter(input.points.iter().cloned());
-    let mut temp = HashSet::with_capacity(input.points.len());
+    let mut points = AHashSet::from_iter(input.points.iter().cloned());
+    let mut temp = AHashSet::with_capacity(input.points.len());
     for fold in &input.folds {
         fold_paper(points.iter().cloned(), &mut temp, fold);
         swap(&mut temp, &mut points);

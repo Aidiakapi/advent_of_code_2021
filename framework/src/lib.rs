@@ -24,18 +24,13 @@ pub mod prelude;
 pub mod submissions;
 pub mod vec;
 
-use std::{
-    collections::HashSet,
-    time::{Duration, Instant},
-};
-
+use crate::day::{BenchOutputs, ColoredOutput};
+use ahash::AHashSet;
 use anyhow::Result;
 use colored::{ColoredString, Colorize};
-use inputs::Inputs;
-
 use day::{Day, DayResult};
-
-use crate::day::{BenchOutputs, ColoredOutput};
+use inputs::Inputs;
+use std::time::{Duration, Instant};
 
 #[macro_export]
 macro_rules! main {
@@ -64,7 +59,7 @@ pub fn run(days: &[&dyn Day]) {
     let specific_days = args
         .iter()
         .filter_map(|x| x.parse::<u32>().ok())
-        .collect::<HashSet<u32>>();
+        .collect::<AHashSet<u32>>();
 
     let mut inputs = Inputs::new();
     for &day in days {
