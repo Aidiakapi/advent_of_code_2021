@@ -24,7 +24,10 @@ pub mod prelude;
 pub mod submissions;
 pub mod vec;
 
-use std::{collections::HashSet, time::Duration};
+use std::{
+    collections::HashSet,
+    time::{Duration, Instant},
+};
 
 use anyhow::Result;
 use colored::{ColoredString, Colorize};
@@ -32,7 +35,7 @@ use inputs::Inputs;
 
 use day::{Day, DayResult};
 
-use crate::day::ColoredOutput;
+use crate::day::{BenchOutputs, ColoredOutput};
 
 #[macro_export]
 macro_rules! main {
@@ -78,6 +81,21 @@ pub fn run(days: &[&dyn Day]) {
 }
 
 fn bench_day(inputs: &mut Inputs, day: &dyn Day) {
+    const MAX_ITER: u32 = 10_000;
+    const MAX_TIME: Duration = Duration::from_secs(5);
+
+    fn print_error(e: anyhow::Error) {
+        println!(" :: {}", format!("error: {}", e).bright_red());
+    }
+
+    fn print_timing(label: &'static str, duration: Duration) {
+        print!(
+            " :: {} {: >13}",
+            label.bright_green(),
+            format!("{duration:?}").white().bold()
+        );
+    }
+
     let day_nr = day.nr();
     print!(
         "{} {}",
@@ -85,23 +103,38 @@ fn bench_day(inputs: &mut Inputs, day: &dyn Day) {
         format!("{day_nr:>2}").bright_red().bold()
     );
     let day_nr = day.nr();
-    let result = inputs.get(day_nr).and_then(|input| day.exec_bench(&input));
-    let timings = match result {
+    let input = match inputs.get(day_nr) {
         Ok(x) => x,
         Err(e) => {
-            println!(" :: {}", format!("error: {}", e).bright_red());
+            print_error(e);
             return;
         }
     };
 
-    fn print_timing(label: &'static str, duration: Duration) {
-        print!(
-            " :: {} {: >14}",
-            label.bright_green(),
-            format!("{duration:?}").white().bold()
-        );
+    let start_time = Instant::now();
+    let mut total_timings = match day.exec_bench(&input) {
+        Ok(x) => x,
+        Err(e) => {
+            print_error(e);
+            return;
+        }
+    };
+    let mut run_count = 1u32;
+    while run_count < MAX_ITER && Instant::now() - start_time < MAX_TIME {
+        let current_timings = day.exec_bench(&input).unwrap();
+        total_timings.parse += current_timings.parse;
+        total_timings.pt1 += current_timings.pt1;
+        total_timings.pt2 += current_timings.pt2;
+        run_count += 1;
     }
 
+    let timings = BenchOutputs {
+        parse: total_timings.parse / run_count,
+        pt1: total_timings.pt1 / run_count,
+        pt2: total_timings.pt2 / run_count,
+    };
+
+    print!(" :: {run_count:>5}");
     print_timing("parse", timings.parse);
     print_timing("pt1", timings.pt1);
     print_timing("pt2", timings.pt2);
