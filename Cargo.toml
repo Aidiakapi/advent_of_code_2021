@@ -9,10 +9,12 @@ edition = "2021"
 ahash = "0.7"
 anyhow = "1.0"
 arrayvec = "0.7"
+bitvec = "0.22"
 colored = "2.0"
 framework = { path = "./framework" }
 itertools = "0.10"
 jagged_array = "0.2"
+smallvec = "1.7"
 
 [workspace]
 members = [
