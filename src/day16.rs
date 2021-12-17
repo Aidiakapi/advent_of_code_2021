@@ -26,7 +26,7 @@ fn read_bit(remainder: &mut &BitSlice) -> bool {
 
 fn read_bits<T, const N: usize>(remainder: &mut &BitSlice) -> T
 where
-    T: Default + BitView + std::ops::ShrAssign<usize> + Sized,
+    T: Default + BitView + std::ops::ShrAssign<usize>,
 {
     let mut value = T::default();
     value.view_bits_mut::<Msb0>()[std::mem::size_of::<T>() * 8 - N..]

@@ -22,6 +22,7 @@ mod inputs;
 pub mod parsers;
 pub mod prelude;
 pub mod submissions;
+pub mod utils;
 pub mod vec;
 
 use crate::day::{BenchOutputs, ColoredOutput};
