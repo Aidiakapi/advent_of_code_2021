@@ -1,4 +1,5 @@
 # Advent of Code 2021
+[![Rust](https://github.com/Aidiakapi/advent_of_code_2021/actions/workflows/rust.yml/badge.svg)](https://github.com/Aidiakapi/advent_of_code_2021/actions/workflows/rust.yml)
 
 My solutions for Advent of Code 2021. Written in Rust 🦀.
 
