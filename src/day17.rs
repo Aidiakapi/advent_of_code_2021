@@ -1,15 +1,14 @@
-use ahash::AHashSet;
-
 use crate::prelude::*;
-use std::{cmp::Ordering, ops::ControlFlow};
 
 day!(17, parse => pt1, pt2);
 
 type Int = i32;
 type Range = std::ops::Range<Int>;
-type Vec2 = framework::vec::Vec2<Int>;
 
-const MAX_MISSES: usize = 1000;
+// Experimentally, for my input, this is actually 64, but I've opted to
+// make it 128 just to have a safety margin... Ideally I'd find a way to
+// compute a theoretical upper bound.
+const MAX_MISSES_IN_A_ROW: usize = 128;
 
 #[derive(Debug, Clone)]
 struct Area {
@@ -17,185 +16,159 @@ struct Area {
     ys: Range,
 }
 
+#[derive(Debug, Clone)]
+struct XRange {
+    // velocity: Int,
+    minimum_step_count: Int,
+    // exclusive upper bound
+    maximum_step_count: Option<Int>,
+}
+
+#[derive(Debug, Clone)]
+struct YRange {
+    velocity: Int,
+    step_range: Range,
+}
+
 fn sum_all_numbers_up_to(n: Int) -> Int {
     (n * (n + 1)) / 2
 }
 
-fn x_after(vel: Int, steps: Int) -> Int {
-    let base = sum_all_numbers_up_to(vel);
-    if steps >= vel {
-        base
-    } else {
-        base - sum_all_numbers_up_to(vel - steps)
-    }
+fn inverse_sum_all_numbers_up_to(sum: Int) -> f64 {
+    ((8.0 * sum as f64 + 1.0).sqrt() - 1.0) / 2.0
 }
 
-fn y_after(vel: Int, steps: Int) -> Int {
-    vel * steps - sum_all_numbers_up_to(steps - 1)
-}
-
-fn binary_search<F>(range: Range, mut f: F) -> Result<Int, Int>
-where
-    F: FnMut(Int) -> Ordering,
-{
-    if range.is_empty() {
-        return Err(range.start);
-    }
-    let mid = (range.end - range.start) / 2 + range.start;
-    match f(mid) {
-        Ordering::Less => binary_search(range.start..mid, f),
-        Ordering::Equal => Ok(mid),
-        Ordering::Greater => binary_search((mid + 1)..range.end, f),
-    }
-}
-
-fn get_minimum_x_velocity(xs: &Range) -> Int {
-    let order = (1..20)
-        .filter(|&order| sum_all_numbers_up_to(1 << order) >= xs.start)
-        .next()
-        .unwrap();
-    binary_search((1 << (order - 1))..((1 << order) + 1), |probe| {
-        xs.start.cmp(&sum_all_numbers_up_to(probe))
-    })
-    .unwrap_either()
-}
-
-fn get_top(vel_y: Int) -> Int {
-    sum_all_numbers_up_to(vel_y)
-}
-
-fn get_y_intercept(y: Int, ys: &Range) -> Option<Int> {
-    let ys_max = (ys.end - 1) as f64;
-    let ys_min = ys.start as f64;
-    let ys_mid = (ys_max - ys_min) / 2.0 + ys_min;
-
-    // Calculate the positive root of y_after(x, y, steps), or in other
-    // words the (non-integral) number of steps after which you reach the
-    // mid-point of the target area, on the Y axis.
-    let fy = y as f64;
-    let y_mid_steps = fy + 0.5 + (fy * fy + fy + ys_mid * -2.0 + 0.25).sqrt();
-    let steps = y_mid_steps.floor() as Int;
-    if ys.contains(&y_after(y, steps)) {
-        Some(steps)
-    } else if ys.contains(&y_after(y, steps + 1)) {
-        Some(steps + 1)
-    } else {
+fn inverse_x_pos_after(velocity: Int, x_pos: Int) -> Option<f64> {
+    let v = velocity as f64;
+    let d = 4.0 * (v * v + v) - 8.0 * x_pos as f64 + 1.0;
+    if d <= 0.0 {
         None
+    } else {
+        Some(d.sqrt() * -0.5 + v + 0.5)
     }
 }
 
-fn get_y_step_range(y: Int, ys: &Range, base_step: Int) -> Range {
-    let mut min = base_step;
-    while ys.contains(&y_after(y, min - 1)) {
-        min -= 1;
+fn inverse_y_pos_after(velocity: Int, y_pos: Int) -> Option<f64> {
+    let v = velocity as f64;
+    let d = 4.0 * (v * v + v) - 8.0 * y_pos as f64 + 1.0;
+    if d <= 0.0 {
+        None
+    } else {
+        Some(d.sqrt() * 0.5 + v + 0.5)
     }
-    let mut max = base_step;
-    while ys.contains(&y_after(y, max + 1)) {
-        max += 1;
-    }
-    min..max + 1
 }
 
-fn visit_target_points<F>(y: Int, xs: &Range, ys: &Range, base_step: Int, min_x: Int, mut f: F)
-where
-    F: FnMut(Vec2) -> ControlFlow<()>,
-{
-    let step_range = get_y_step_range(y, ys, base_step);
-    for steps in step_range.clone() {
-        for x in min_x.. {
-            let x_pos = x_after(x, steps);
-            if x_pos < xs.start {
-                continue;
-            }
-            if x_pos >= xs.end {
+fn get_valid_x_ranges(target: Range) -> Vec<XRange> {
+    assert!(target.start > 0 && target.end > 0);
+    let mut ranges = Vec::new();
+
+    // Minimum velocity is where the sum_of_all_numbers_up_to(velocity) is >= target.start
+    let minimum_velocity = inverse_sum_all_numbers_up_to(target.start);
+    let minimum_velocity = minimum_velocity.ceil() as Int;
+    // The maximum velocity can be anything less than target.end, because
+    // because (target.end - 1) would reach the box in 1 step.
+    for velocity in minimum_velocity..target.end {
+        let min_step = inverse_x_pos_after(velocity, target.start).unwrap().ceil() as Int;
+        let max_step = inverse_x_pos_after(velocity, target.end - 1).map(|n| n.floor() as Int + 1);
+        match max_step {
+            Some(n) if n <= min_step => continue,
+            _ => {}
+        }
+        ranges.push(XRange {
+            // velocity,
+            minimum_step_count: min_step,
+            maximum_step_count: max_step,
+        })
+    }
+    ranges
+}
+
+fn get_valid_y_ranges(target: Range) -> Vec<YRange> {
+    assert!(target.start < 0 && target.end < 0);
+    let mut ranges = Vec::new();
+
+    let mut misses_in_a_row = 0;
+    let max_y = target.end - 1;
+    let min_y = target.start;
+
+    // Anything below the starting position, would mean that in a single step
+    // we end up already below where the range starts, after which it just keeps
+    // dropping further, so there's no point in checking.
+    for velocity in min_y.. {
+        let min_steps = inverse_y_pos_after(velocity, max_y).unwrap().ceil() as Int;
+        let max_steps = inverse_y_pos_after(velocity, min_y).unwrap().floor() as Int;
+        if min_steps <= max_steps {
+            misses_in_a_row = 0;
+            ranges.push(YRange {
+                velocity,
+                step_range: min_steps..max_steps + 1,
+            });
+        } else {
+            misses_in_a_row += 1;
+            if misses_in_a_row > MAX_MISSES_IN_A_ROW {
                 break;
             }
-            if let ControlFlow::Break(_) = f(Vec2 { x, y }) {
-                return;
-            }
         }
+    }
+
+    ranges
+}
+
+fn get_valid_ranges(area: &Area) -> (Vec<XRange>, Vec<YRange>) {
+    (
+        get_valid_x_ranges(area.xs.clone()),
+        get_valid_y_ranges(area.ys.clone()),
+    )
+}
+
+fn is_overlapping(x_range: &XRange, y_range: &YRange) -> bool {
+    if x_range.minimum_step_count >= y_range.step_range.end {
+        false
+    } else if let Some(maximum) = x_range.maximum_step_count {
+        y_range.step_range.start < maximum
+    } else {
+        true
     }
 }
 
 fn pt1(area: &Area) -> Int {
-    let min_x_vel = get_minimum_x_velocity(&area.xs);
+    let (x_ranges, y_ranges) = get_valid_ranges(area);
+    let max_y_velocity = y_ranges
+        .iter()
+        .rev()
+        .filter(|y_range| {
+            x_ranges
+                .iter()
+                .any(|x_range| is_overlapping(x_range, y_range))
+        })
+        .next()
+        .unwrap()
+        .velocity;
 
-    let mut y_miss_chain = 0;
-    let mut x_miss_chain = 0;
-    let mut last_y = 0;
-    for y in 1.. {
-        let base_step = match get_y_intercept(y, &area.ys) {
-            Some(steps) => {
-                y_miss_chain = 0;
-                steps
-            }
-            None => {
-                y_miss_chain += 1;
-                if y_miss_chain >= MAX_MISSES {
-                    break;
-                }
-                continue;
-            }
-        };
-
-        let mut any = false;
-        visit_target_points(y, &area.xs, &area.ys, base_step, min_x_vel, |_| {
-            any = true;
-            ControlFlow::Break(())
-        });
-        if any {
-            x_miss_chain = 0;
-            last_y = y;
-        } else {
-            x_miss_chain += 1;
-            if x_miss_chain >= MAX_MISSES {
-                break;
-            }
-        }
-    }
-
-    get_top(last_y)
+    sum_all_numbers_up_to(max_y_velocity)
 }
 
 fn pt2(area: &Area) -> usize {
-    let min_x_vel = get_minimum_x_velocity(&area.xs);
+    let (x_ranges, y_ranges) = get_valid_ranges(area);
+    x_ranges
+        .iter()
+        .map(|x_range| {
+            y_ranges
+                .iter()
+                .filter(|&y_range| is_overlapping(x_range, y_range))
+                .count()
+        })
+        .sum::<usize>()
+    // for x_range in &x_ranges {
+    //     for y_range in &y_ranges {
+    //         let step_range = get_overlap(x_range, y_range);
+    //         for steps in step_range {
+    //             unique_points.insert(pos_after(x_range.velocity, y_range.velocity, steps));
+    //         }
+    //     }
+    // }
 
-    let mut y_miss_chain = 0;
-    let mut x_miss_chain = 0;
-
-    let mut velocity_set = AHashSet::new();
-    for y in -1000.. {
-        let base_step = match get_y_intercept(y, &area.ys) {
-            Some(steps) => {
-                y_miss_chain = 0;
-                steps
-            }
-            None => {
-                y_miss_chain += 1;
-                if y_miss_chain >= MAX_MISSES {
-                    break;
-                }
-                continue;
-            }
-        };
-
-        let mut any = false;
-        visit_target_points(y, &area.xs, &area.ys, base_step, min_x_vel, |velocity| {
-            velocity_set.insert(velocity);
-            any = true;
-            ControlFlow::Continue(())
-        });
-        if any {
-            x_miss_chain = 0;
-        } else {
-            x_miss_chain += 1;
-            if x_miss_chain >= MAX_MISSES {
-                break;
-            }
-        }
-    }
-
-    velocity_set.len()
+    // unique_points.len()
 }
 
 fn parse(input: &str) -> ParseResult<Area> {
@@ -214,28 +187,6 @@ fn parse(input: &str) -> ParseResult<Area> {
 
 tests! {
     const EXAMPLE: &'static str = "target area: x=20..30, y=-10..-5";
-
-    fn position_after(vel: Vec2, steps: Int) -> Vec2 {
-        Vec2 {
-            x: x_after(vel.x, steps),
-            y: y_after(vel.y, steps),
-        }
-    }
-
-    #[test]
-    fn positions() {
-        let dir = Vec2 { x: 7, y: 2 };
-        assert_eq!(position_after(dir, 0), Vec2 { x: 0, y: 0 });
-        assert_eq!(position_after(dir, 1), Vec2 { x: 7, y: 2 });
-        assert_eq!(position_after(dir, 2), Vec2 { x: 13, y: 3 });
-        assert_eq!(position_after(dir, 3), Vec2 { x: 18, y: 3 });
-        assert_eq!(position_after(dir, 4), Vec2 { x: 22, y: 2 });
-        assert_eq!(position_after(dir, 5), Vec2 { x: 25, y: 0 });
-        assert_eq!(position_after(dir, 6), Vec2 { x: 27, y: -3 });
-        assert_eq!(position_after(dir, 7), Vec2 { x: 28, y: -7 });
-        assert_eq!(position_after(dir, 8), Vec2 { x: 28, y: -12 });
-        assert_eq!(position_after(dir, 9), Vec2 { x: 28, y: -18 });
-    }
 
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 45);
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 112);
