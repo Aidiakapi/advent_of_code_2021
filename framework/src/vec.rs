@@ -12,6 +12,12 @@ pub struct Vec2<T> {
     pub x: T,
     pub y: T,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct Vec3<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+}
 
 pub type Vec2u = Vec2<usize>;
 pub type Vec2i = Vec2<isize>;
@@ -68,6 +74,46 @@ macro_rules! impl_vec_bin_ops {
                 self.y.$assign_fn_name(rhs);
             }
         }
+
+        impl<T: $trait_name<Output = T>> $trait_name for Vec3<T> {
+            type Output = Vec3<T>;
+
+            fn $trait_fn(self, rhs: Self) -> Self::Output {
+                Vec3 {
+                    x: self.x.$trait_fn(rhs.x),
+                    y: self.y.$trait_fn(rhs.y),
+                    z: self.z.$trait_fn(rhs.z),
+                }
+            }
+        }
+
+        impl<T: $trait_name<Output = T> + Clone> $trait_name<T> for Vec3<T> {
+            type Output = Vec3<T>;
+
+            fn $trait_fn(self, rhs: T) -> Self::Output {
+                Vec3 {
+                    x: self.x.$trait_fn(rhs.clone()),
+                    y: self.y.$trait_fn(rhs.clone()),
+                    z: self.z.$trait_fn(rhs),
+                }
+            }
+        }
+
+        impl<T: $assign_trait_name> $assign_trait_name for Vec3<T> {
+            fn $assign_fn_name(&mut self, rhs: Self) {
+                self.x.$assign_fn_name(rhs.x);
+                self.y.$assign_fn_name(rhs.y);
+                self.z.$assign_fn_name(rhs.z);
+            }
+        }
+
+        impl<T: $assign_trait_name + Clone> $assign_trait_name<T> for Vec3<T> {
+            fn $assign_fn_name(&mut self, rhs: T) {
+                self.x.$assign_fn_name(rhs.clone());
+                self.y.$assign_fn_name(rhs.clone());
+                self.z.$assign_fn_name(rhs);
+            }
+        }
     };
 }
 
@@ -91,6 +137,18 @@ macro_rules! impl_vec_un_ops {
                 Vec2 {
                     x: self.x.$trait_fn(),
                     y: self.y.$trait_fn(),
+                }
+            }
+        }
+
+        impl<T: $trait_name<Output = O>, O> $trait_name for Vec3<T> {
+            type Output = Vec3<O>;
+
+            fn $trait_fn(self) -> Self::Output {
+                Vec3 {
+                    x: self.x.$trait_fn(),
+                    y: self.y.$trait_fn(),
+                    z: self.z.$trait_fn(),
                 }
             }
         }
@@ -120,12 +178,44 @@ impl<T: PartialOrd + Add<Output = T> + Sub<Output = T> + Clone> Vec2<T> {
     pub fn manhathan_dist(self, other: Self) -> T {
         let max = Self::max(self.clone(), other.clone());
         let min = Self::min(self, other);
-        max.x + max.y - min.x - min.y
+        (max.x - min.x) + (max.y - min.y)
     }
 }
 
 impl<T: Display> Display for Vec2<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+impl<T: PartialOrd> Vec3<T> {
+    pub fn max(self, other: Self) -> Self {
+        Self {
+            x: if self.x > other.x { self.x } else { other.x },
+            y: if self.y > other.y { self.y } else { other.y },
+            z: if self.z > other.z { self.z } else { other.z },
+        }
+    }
+
+    pub fn min(self, other: Self) -> Self {
+        Self {
+            x: if self.x < other.x { self.x } else { other.x },
+            y: if self.y < other.y { self.y } else { other.y },
+            z: if self.z < other.z { self.z } else { other.z },
+        }
+    }
+}
+
+impl<T: PartialOrd + Add<Output = T> + Sub<Output = T> + Clone> Vec3<T> {
+    pub fn manhathan_dist(self, other: Self) -> T {
+        let max = Self::max(self.clone(), other.clone());
+        let min = Self::min(self, other);
+        (max.x - min.x) + (max.y - min.y) + (max.z - min.z)
+    }
+}
+
+impl<T: Display> Display for Vec3<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }

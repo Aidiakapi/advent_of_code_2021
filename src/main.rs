@@ -1,6 +1,10 @@
 #![allow(incomplete_features)]
 #![feature(
     array_windows,
+    const_for,
+    const_trait_impl,
+    const_fn_fn_ptr_basics,
+    const_mut_refs,
     int_abs_diff,
     generic_const_exprs,
     never_type,
@@ -29,4 +33,5 @@ framework::main!(
     day16,
     day17,
     day18,
+    day19,
 );
