@@ -159,16 +159,6 @@ fn pt2(area: &Area) -> usize {
                 .count()
         })
         .sum::<usize>()
-    // for x_range in &x_ranges {
-    //     for y_range in &y_ranges {
-    //         let step_range = get_overlap(x_range, y_range);
-    //         for steps in step_range {
-    //             unique_points.insert(pos_after(x_range.velocity, y_range.velocity, steps));
-    //         }
-    //     }
-    // }
-
-    // unique_points.len()
 }
 
 fn parse(input: &str) -> ParseResult<Area> {
