@@ -1,10 +1,13 @@
 use super::*;
 use crate::array::init_boxed_array;
+use bitvec::prelude::*;
 use std::marker::PhantomData;
 
 pub trait GridSpec<T> {
-    fn initialize() -> Self;
-    fn set(&mut self, x: usize, y: usize, value: T) -> Result<(), ()>;
+    type Intermediate;
+    fn initialize() -> Self::Intermediate;
+    fn set(data: &mut Self::Intermediate, x: usize, y: usize, value: T) -> Result<(), ()>;
+    fn finalize(data: Self::Intermediate) -> Self;
 }
 
 impl<T, const W: usize, const H: usize> GridSpec<T> for Box<[[T; H]; W]>
@@ -12,14 +15,58 @@ where
     T: Default + Sized,
     [T; W * H]: Sized,
 {
+    type Intermediate = Self;
+
     fn initialize() -> Self {
         let boxed = init_boxed_array::<T, { W * H }>();
         unsafe { Box::from_raw(Box::into_raw(boxed).cast()) }
     }
 
-    fn set(&mut self, x: usize, y: usize, value: T) -> Result<(), ()> {
-        *self.get_mut(x).and_then(|x| x.get_mut(y)).ok_or(())? = value;
+    fn set(data: &mut Self, x: usize, y: usize, value: T) -> Result<(), ()> {
+        *data.get_mut(x).and_then(|x| x.get_mut(y)).ok_or(())? = value;
         Ok(())
+    }
+
+    fn finalize(data: Self::Intermediate) -> Self {
+        data
+    }
+}
+
+impl GridSpec<bool> for (usize, BitVec) {
+    type Intermediate = (usize, bool, BitVec);
+
+    fn initialize() -> Self::Intermediate {
+        (0, false, BitVec::new())
+    }
+
+    fn set(
+        (width, locked_width, data): &mut Self::Intermediate,
+        x: usize,
+        y: usize,
+        value: bool,
+    ) -> Result<(), ()> {
+        if *locked_width {
+            if x >= *width {
+                return Err(());
+            }
+        } else if y == 0 {
+            if x >= *width {
+                data.resize(x + 1, false);
+                *width = x + 1;
+            }
+        } else {
+            *locked_width = true;
+        }
+        let min_size = *width * (y + 1);
+        if data.len() < min_size {
+            data.resize(min_size, false);
+        }
+        data.set(y * *width + x, value);
+        Ok(())
+    }
+
+    fn finalize(data: Self::Intermediate) -> Self {
+        (data.0, data.2)
     }
 }
 
@@ -85,12 +132,12 @@ where
         }
 
         let mut height = 1;
-        while let Ok((_, new_remainder)) = self.line_sep.parse(remainder) {
+        'outer: while let Ok((_, new_remainder)) = self.line_sep.parse(remainder) {
             remainder = new_remainder;
             for x in 0..width {
                 let (value, new_remainder) = match self.value.parse(remainder) {
                     Ok(x) => x,
-                    Err(_) if x == 0 => return Ok((grid, remainder)),
+                    Err(_) if x == 0 => break 'outer,
                     Err(e) => return Err(e),
                 };
                 set(x, height, value)?;
@@ -99,7 +146,7 @@ where
             height += 1;
         }
 
-        Ok((grid, remainder))
+        Ok((GS::finalize(grid), remainder))
     }
 }
 

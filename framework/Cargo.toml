@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 ahash = "0.7"
 anyhow = "1.0"
+bitvec = "0.22"
 colored = "2.0"
 thiserror = "1.0"
 tinyvec = "1.5"
