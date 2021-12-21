@@ -83,12 +83,12 @@ fn pt2(input: &Input) -> Result<MulSubmission<u32>> {
     ))
 }
 
-fn parse(input: &str) -> ParseResult<Input> {
+fn parse(input: &[u8]) -> ParseResult<Input> {
     use parsers::{special::grid, *};
-    let numbers = number_u32.sep_by(token(',')).trailed(token("\n\n"));
-    let bingo_digit = token(' ').repeat().opt().then(number_u32);
-    let bingo_board = grid(token('\n'), bingo_digit, |x, y, value| Some((x, y, value)));
-    let bingo_boards = bingo_board.sep_by(token('\n'));
+    let numbers = number_u32.sep_by(token(b',')).trailed(token(b"\n\n"));
+    let bingo_digit = token(b' ').repeat().opt().then(number_u32);
+    let bingo_board = grid(token(b'\n'), bingo_digit, |x, y, value| Some((x, y, value)));
+    let bingo_boards = bingo_board.sep_by(token(b'\n'));
     let parser = numbers
         .and(bingo_boards)
         .map(|(numbers, bingo_boards)| Input {
@@ -99,7 +99,7 @@ fn parse(input: &str) -> ParseResult<Input> {
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0

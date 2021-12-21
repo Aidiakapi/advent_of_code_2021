@@ -103,7 +103,7 @@ where
 {
     type Output<'s> = GS;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         let mut grid = GS::initialize();
 
         let mut set = {
@@ -156,7 +156,7 @@ mod tests {
 
     #[test]
     fn simple_grid() {
-        const EXAMPLE: &'static str = "\
+        const EXAMPLE: &'static [u8] = b"\
 #######
 #O....#
 ###.###
@@ -171,11 +171,11 @@ mod tests {
             Object,
             Target,
         }
-        let cell = token(('.', Cell::Empty))
-            .or(token(('#', Cell::Wall)))
-            .or(token(('O', Cell::Object)))
-            .or(token(('X', Cell::Target)));
-        let grid: Box<[[Cell; 3]; 5]> = grid(token('\n'), cell, |x, y, cell| {
+        let cell = token((b'.', Cell::Empty))
+            .or(token((b'#', Cell::Wall)))
+            .or(token((b'O', Cell::Object)))
+            .or(token((b'X', Cell::Target)));
+        let grid: Box<[[Cell; 3]; 5]> = grid(token(b'\n'), cell, |x, y, cell| {
             if matches!((x, y), (1..=5, 1..=3)) {
                 Some((x - 1, y - 1, cell))
             } else {

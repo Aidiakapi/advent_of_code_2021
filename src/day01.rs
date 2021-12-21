@@ -20,13 +20,13 @@ fn pt2(input: &[u32]) -> usize {
         .count()
 }
 
-fn parse(input: &str) -> ParseResult<Vec<u32>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<u32>> {
     use parsers::*;
-    number_u32.sep_by(token('\n')).parse(input)
+    number_u32.sep_by(token(b'\n')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 199
 200
 208

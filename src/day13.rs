@@ -81,25 +81,25 @@ fn pt2(input: &Input) -> String {
     paper_to_string(&points)
 }
 
-fn parse(input: &str) -> ParseResult<Input> {
+fn parse(input: &[u8]) -> ParseResult<Input> {
     use parsers::*;
-    let point = number_usize.and(token(',').then(number_usize));
-    let points = point.map(|(x, y)| Vec2u { x, y }).sep_by(token('\n'));
+    let point = number_usize.and(token(b',').then(number_usize));
+    let points = point.map(|(x, y)| Vec2u { x, y }).sep_by(token(b'\n'));
 
-    let direction = token(('x', Direction::X)).or(token(('y', Direction::Y)));
-    let fold = token("fold along ")
+    let direction = token((b'x', Direction::X)).or(token((b'y', Direction::Y)));
+    let fold = token(b"fold along ")
         .then(direction)
-        .and(token('=').then(number_usize));
-    let folds = fold.sep_by(token('\n'));
+        .and(token(b'=').then(number_usize));
+    let folds = fold.sep_by(token(b'\n'));
 
     points
-        .and(token("\n\n").then(folds))
+        .and(token(b"\n\n").then(folds))
         .map(|(points, folds)| Input { points, folds })
         .parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 6,10
 0,14
 9,10

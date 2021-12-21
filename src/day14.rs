@@ -80,11 +80,11 @@ fn pt2(input: &Input) -> Result<u64> {
     pts(input, 40).map(|SubSubmission(max, min)| max - min)
 }
 
-fn parse(input: &str) -> ParseResult<Input> {
+fn parse(input: &[u8]) -> ParseResult<Input> {
     use parsers::*;
-    let kind = RefCell::new(Vec::<(char, u8)>::new());
+    let kind = RefCell::new(Vec::<(u8, u8)>::new());
     let molecule = any().map_res(|c| {
-        if c >= 'A' && c <= 'Z' {
+        if matches!(c, b'A'..=b'Z') {
             let mut map = kind.borrow_mut();
             Ok(match map.iter().find(|(x, _)| *x == c) {
                 Some((_, idx)) => *idx,
@@ -99,10 +99,10 @@ fn parse(input: &str) -> ParseResult<Input> {
         }
     });
     let template = molecule.repeat_into();
-    let rule = molecule.and(molecule).and(token(" -> ").then(molecule));
+    let rule = molecule.and(molecule).and(token(b" -> ").then(molecule));
     let rule = rule.map(|((lhs, rhs), add)| Rule { lhs, rhs, add });
-    let rules = rule.sep_by(token('\n'));
-    let parser = template.and(token("\n\n").then(rules));
+    let rules = rule.sep_by(token(b'\n'));
+    let parser = template.and(token(b"\n\n").then(rules));
     parser.parse(input).map(|((template, rules), rem)| {
         let molecule_count = kind.borrow().len();
         assert!(molecule_count <= MAX_MOLECULE_TYPE_COUNT);
@@ -118,7 +118,7 @@ fn parse(input: &str) -> ParseResult<Input> {
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 NNCB
 
 CH -> B

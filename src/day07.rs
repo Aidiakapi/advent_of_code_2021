@@ -55,13 +55,13 @@ fn get_score(input: &[u32], position: u32) -> u32 {
         .sum()
 }
 
-fn parse(input: &str) -> ParseResult<Vec<u32>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<u32>> {
     use parsers::*;
-    number_u32.sep_by(token(',')).parse(input)
+    number_u32.sep_by(token(b',')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "16,1,2,0,4,2,7,1,2,14";
+    const EXAMPLE: &'static [u8] = b"16,1,2,0,4,2,7,1,2,14";
 
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => SubmissionContext(2, 37));
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => SubmissionContext(5, 168));

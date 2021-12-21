@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use thiserror::Error;
 
-pub type ParseResult<'s, T> = Result<(T, &'s str), (ParseError, &'s str)>;
+pub type ParseResult<'s, T> = Result<(T, &'s [u8]), (ParseError, &'s [u8])>;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum ParseError {
@@ -30,9 +30,15 @@ pub trait Finish<T> {
 impl<T> Finish<T> for ParseResult<'_, T> {
     fn finish(self) -> Result<T> {
         match self {
-            Ok((x, "" | "\n")) => Ok(x),
-            Ok((_, remainder)) => Err(anyhow!("incomplete, remainder: \"{remainder}\"")),
-            Err((e, remainder)) => Err(anyhow!("{e}, remainder: \"{remainder}\"")),
+            Ok((x, [] | [b'\n'])) => Ok(x),
+            Ok((_, remainder)) => Err(anyhow!(
+                "incomplete, remainder: \"{}\"",
+                String::from_utf8_lossy(remainder)
+            )),
+            Err((e, remainder)) => Err(anyhow!(
+                "{e}, remainder: \"{}\"",
+                String::from_utf8_lossy(remainder)
+            )),
         }
     }
 }

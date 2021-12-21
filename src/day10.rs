@@ -104,25 +104,25 @@ fn pt2(input: &[Line]) -> u64 {
     scores[scores.len() / 2]
 }
 
-fn parse(input: &str) -> ParseResult<Vec<Line>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<Line>> {
     use parsers::*;
     let delimiter = #[rustfmt::skip] {
-            token(('(', Delimiter::ParensOpen))
-        .or(token((')', Delimiter::ParensClose)))
-        .or(token(('[', Delimiter::BracketsOpen)))
-        .or(token((']', Delimiter::BracketsClose)))
-        .or(token(('{', Delimiter::BracesOpen)))
-        .or(token(('}', Delimiter::BracesClose)))
-        .or(token(('<', Delimiter::AngleOpen)))
-        .or(token(('>', Delimiter::AngleClose)))
+            token((b'(', Delimiter::ParensOpen))
+        .or(token((b')', Delimiter::ParensClose)))
+        .or(token((b'[', Delimiter::BracketsOpen)))
+        .or(token((b']', Delimiter::BracketsClose)))
+        .or(token((b'{', Delimiter::BracesOpen)))
+        .or(token((b'}', Delimiter::BracesClose)))
+        .or(token((b'<', Delimiter::AngleOpen)))
+        .or(token((b'>', Delimiter::AngleClose)))
     };
     let line = delimiter.fold_mut(Vec::new(), |line, delim| line.push(delim));
     let line = line.map(|delimiters| Line { delimiters });
-    line.sep_by(token('\n')).parse(input)
+    line.sep_by(token(b'\n')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 [({(<(())[]>[[{[]{<()<>>
 [(()[<>])]({[<{<<[]>>(
 {([(<{}[<>[]}>{[]{[(<()>

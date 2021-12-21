@@ -67,15 +67,15 @@ fn get_basin_size(p: Vec2u, input: &[Vec<u8>], visited: &mut AHashSet<Vec2u>) ->
     size
 }
 
-fn parse(input: &str) -> ParseResult<Vec<Vec<u8>>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<Vec<u8>>> {
     use parsers::*;
-    let input = input.trim_end();
+    let input = input.strip_suffix(b"\n").unwrap_or(input);
     let row = digit().fold_mut(Vec::new(), |row, nr| row.push(nr));
-    row.sep_by(token('\n')).parse(input)
+    row.sep_by(token(b'\n')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 2199943210
 3987894921
 9856789892

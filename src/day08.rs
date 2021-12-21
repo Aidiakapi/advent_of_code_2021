@@ -52,38 +52,39 @@ fn get_record_value(record: &Record) -> u32 {
         found[index] = measurement;
     }
 
-    record.digits
+    record
+        .digits
         .iter()
         .map(|&Segments(x)| found.iter().position(|&y| x == y).unwrap())
         .fold(0u32, |res, nr| res * 10 + (nr as u32))
 }
 
-fn parse(input: &str) -> ParseResult<Vec<Record>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<Record>> {
     use parsers::*;
     let segment_digit = #[rustfmt::skip] {
-            token(('a', 1_u8 << 0))
-        .or(token(('b', 1_u8 << 1)))
-        .or(token(('c', 1_u8 << 2)))
-        .or(token(('d', 1_u8 << 3)))
-        .or(token(('e', 1_u8 << 4)))
-        .or(token(('f', 1_u8 << 5)))
-        .or(token(('g', 1_u8 << 6)))
+            token((b'a', 1_u8 << 0))
+        .or(token((b'b', 1_u8 << 1)))
+        .or(token((b'c', 1_u8 << 2)))
+        .or(token((b'd', 1_u8 << 3)))
+        .or(token((b'e', 1_u8 << 4)))
+        .or(token((b'f', 1_u8 << 5)))
+        .or(token((b'g', 1_u8 << 6)))
     };
     let segment = segment_digit.fold(0, |acc, v| acc | v).map(|x| Segments(x));
-    let measurements = segment.clone().trailed(token(' ')).many_n();
-    let digits = token(' ').then(segment).many_n();
+    let measurements = segment.clone().trailed(token(b' ')).many_n();
+    let digits = token(b' ').then(segment).many_n();
     let record = measurements
-        .trailed(token('|'))
+        .trailed(token(b'|'))
         .and(digits)
         .map(|(measurements, digits)| Record {
             measurements,
             digits,
         });
-    record.sep_by(token('\n')).parse(input)
+    record.sep_by(token(b'\n')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
 edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
 fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg

@@ -27,13 +27,13 @@ fn pt2(input: &[u64]) -> u64 {
     pts(input, 256)
 }
 
-fn parse(input: &str) -> ParseResult<Vec<u64>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<u64>> {
     use parsers::*;
-    number_u64.sep_by(token(',')).parse(input)
+    number_u64.sep_by(token(b',')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "3,4,3,1,2";
+    const EXAMPLE: &'static [u8] = b"3,4,3,1,2";
 
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 5934);
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 26984457539);

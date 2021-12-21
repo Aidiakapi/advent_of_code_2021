@@ -72,8 +72,8 @@ pub struct BenchOutputs {
 
 pub trait Day {
     fn nr(&self) -> u32;
-    fn exec(&self, input: &str) -> DayResult;
-    fn exec_bench(&self, input: &str) -> Result<BenchOutputs>;
+    fn exec(&self, input: &[u8]) -> DayResult;
+    fn exec_bench(&self, input: &[u8]) -> Result<BenchOutputs>;
 }
 
 pub auto trait IsNotResult {}
@@ -119,7 +119,7 @@ pub struct ColoredOutput {
 
 pub struct DayCommon<P, P1, P2, I, I1, I2, O1, O2>
 where
-    P: for<'s> Fn(&'s str) -> ParseResult<'s, I>,
+    P: for<'s> Fn(&'s [u8]) -> ParseResult<'s, I>,
     P1: Fn(&I1) -> O1,
     P2: Fn(&I2) -> O2,
     I: Borrow<I1> + Borrow<I2>,
@@ -138,7 +138,7 @@ where
 
 impl<P, P1, P2, I, I1, I2, O1, O2> Day for DayCommon<P, P1, P2, I, I1, I2, O1, O2>
 where
-    P: for<'s> Fn(&'s str) -> ParseResult<'s, I>,
+    P: for<'s> Fn(&'s [u8]) -> ParseResult<'s, I>,
     P1: Fn(&I1) -> O1,
     P2: Fn(&I2) -> O2,
     I: Borrow<I1> + Borrow<I2>,
@@ -151,7 +151,7 @@ where
         self.nr
     }
 
-    fn exec(&self, input: &str) -> DayResult {
+    fn exec(&self, input: &[u8]) -> DayResult {
         let input = match (self.parser)(input).finish() {
             Ok(x) => x,
             Err(e) => return DayResult::ParseFailed(e),
@@ -164,7 +164,7 @@ where
         }
     }
 
-    fn exec_bench(&self, input: &str) -> Result<BenchOutputs> {
+    fn exec_bench(&self, input: &[u8]) -> Result<BenchOutputs> {
         let start = Instant::now();
         let parse_result = (self.parser)(input);
         let parse = Instant::now() - start;

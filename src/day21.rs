@@ -103,17 +103,17 @@ fn pt2(input: &(u8, u8)) -> u64 {
     p1_wins.max(p2_wins)
 }
 
-fn parse(input: &str) -> ParseResult<(u8, u8)> {
+fn parse(input: &[u8]) -> ParseResult<(u8, u8)> {
     use parsers::*;
-    token("Player 1 starting position: ")
+    token(b"Player 1 starting position: ")
         .then(number_u8)
-        .trailed(token("\nPlayer 2 starting position: "))
+        .trailed(token(b"\nPlayer 2 starting position: "))
         .and(number_u8)
         .parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 Player 1 starting position: 4
 Player 2 starting position: 8";
 

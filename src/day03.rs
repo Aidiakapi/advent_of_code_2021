@@ -35,13 +35,6 @@ fn pt2<const BIT_COUNT: usize>(input: &[usize]) -> MulSubmission<usize> {
     MulSubmission(oxygen_generator_rating, co2_scrubber_rating)
 }
 
-fn parse(input: &str) -> ParseResult<Vec<usize>> {
-    use parsers::*;
-    let bit = token(('1', 1)).or(token(('0', 0)));
-    let word = bit.fold(0, |nr, bit| (nr << 1) ^ bit);
-    word.sep_by(token('\n')).parse(input)
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Rating {
     OxygenGenerator,
@@ -66,8 +59,15 @@ fn pt2_compute_rating<const BIT_COUNT: usize>(rating: Rating, input: &mut Vec<us
     input[0]
 }
 
+fn parse(input: &[u8]) -> ParseResult<Vec<usize>> {
+    use parsers::*;
+    let bit = token((b'1', 1)).or(token((b'0', 0)));
+    let word = bit.fold(0, |nr, bit| (nr << 1) ^ bit);
+    word.sep_by(token(b'\n')).parse(input)
+}
+
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 00100
 11110
 10110

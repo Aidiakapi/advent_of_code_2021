@@ -43,17 +43,17 @@ fn pt2(input: &[Instruction]) -> MulSubmission<i32> {
     MulSubmission(hpos, depth)
 }
 
-fn parse(input: &str) -> ParseResult<Vec<Instruction>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<Instruction>> {
     use parsers::*;
-    let direction = token(("forward ", Direction::Forward))
-        .or(token(("down ", Direction::Down)))
-        .or(token(("up ", Direction::Up)));
+    let direction = token((b"forward ", Direction::Forward))
+        .or(token((b"down ", Direction::Down)))
+        .or(token((b"up ", Direction::Up)));
     let instruction = direction.and(number_u32);
-    instruction.sep_by(token('\n')).parse(input)
+    instruction.sep_by(token(b'\n')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 forward 5
 down 5
 forward 8

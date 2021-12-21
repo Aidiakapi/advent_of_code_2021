@@ -186,15 +186,15 @@ fn pt2(input: &[SnailfishNr]) -> u64 {
         .unwrap()
 }
 
-fn parse(input: &str) -> ParseResult<Vec<SnailfishNr>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<SnailfishNr>> {
     use parsers::*;
-    let part = token(('[', Part::OpenBracket))
-        .or(token((',', Part::Separator)))
-        .or(token((']', Part::CloseBracket)))
+    let part = token((b'[', Part::OpenBracket))
+        .or(token((b',', Part::Separator)))
+        .or(token((b']', Part::CloseBracket)))
         .or(number_u8.map(Part::Number));
     part.repeat_into()
         .map(|parts| SnailfishNr { parts })
-        .sep_by(token('\n'))
+        .sep_by(token(b'\n'))
         .parse(input)
 }
 
@@ -206,7 +206,7 @@ tests! {
         item.to_string()
     }
 
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[[5,[2,8]],4],[5,[[9,9],0]]]
 [6,[[[6,2],[5,6]],[[7,6],[4,7]]]]

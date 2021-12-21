@@ -208,25 +208,25 @@ fn pt2(input: &[ScanData]) -> Int {
         .unwrap()
 }
 
-fn parse(input: &str) -> ParseResult<Vec<ScanData>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<ScanData>> {
     use parsers::*;
-    let header = token("--- scanner ")
+    let header = token(b"--- scanner ")
         .then(number_usize)
-        .trailed(token(" ---\n"));
+        .trailed(token(b" ---\n"));
     let coord = number_i32
-        .trailed(token(','))
+        .trailed(token(b','))
         .and(number_i32)
-        .trailed(token(','))
+        .trailed(token(b','))
         .and(number_i32)
         .map(|((x, y), z)| Vec3 { x, y, z });
-    let coords = coord.sep_by(token('\n'));
+    let coords = coord.sep_by(token(b'\n'));
 
-    let scan_data = header.then(coords).sep_by(token("\n\n"));
+    let scan_data = header.then(coords).sep_by(token(b"\n\n"));
     scan_data.parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 --- scanner 0 ---
 404,-588,-901
 528,-643,409

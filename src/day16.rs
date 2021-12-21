@@ -134,14 +134,10 @@ fn pt2(input: &BitSlice) -> u64 {
     result
 }
 
-fn parse(input: &str) -> ParseResult<BitVec> {
+fn parse(input: &[u8]) -> ParseResult<BitVec> {
     use parsers::*;
     any()
-        .map_res(|c| {
-            c.to_digit(16)
-                .map(|c| c as u8)
-                .ok_or(ParseError::TokenDoesNotMatch)
-        })
+        .map_res(|c| c.to_hex_digit().ok_or(ParseError::TokenDoesNotMatch))
         .fold_mut(BitVec::new(), |x, c| {
             x.extend_from_bitslice(&c.view_bits::<Msb0>()[4..8])
         })

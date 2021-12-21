@@ -212,6 +212,6 @@ fn exec_day(inputs: &mut Inputs, day: &dyn Day) {
     }
 }
 
-pub fn get_input(day_nr: u32) -> Result<String> {
+pub fn get_input(day_nr: u32) -> Result<Vec<u8>> {
     Inputs::new().get(day_nr)
 }

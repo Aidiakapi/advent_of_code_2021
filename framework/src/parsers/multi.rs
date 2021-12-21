@@ -74,30 +74,28 @@ impl<P: Parser> ParserMultiExt for P {}
 pub struct TakeWhile<F>(F);
 impl<F> Parser for TakeWhile<F>
 where
-    F: Fn(char) -> bool,
+    F: Fn(u8) -> bool,
 {
-    type Output<'s> = &'s str;
+    type Output<'s> = &'s [u8];
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
-        let mut iter = input.char_indices();
-        let (mut last_index, mut last_char) = iter.next().ok_or((ParseError::EmptyInput, input))?;
-        if !(self.0)(last_char) {
-            return Err((ParseError::UnexpectedChar, input));
-        }
-        while let Some((new_index, new_char)) = iter.next() {
-            if !(self.0)(new_char) {
-                break;
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
+        let mut index = 0;
+        loop {
+            match input.get(index) {
+                Some(&c) if (self.0)(c) => index += 1,
+                _ => break,
             }
-            last_index = new_index;
-            last_char = new_char;
         }
-        last_index += last_char.len_utf8();
-        Ok((&input[0..last_index], &input[last_index..]))
+        if index == 0 {
+            Err((ParseError::UnexpectedChar, input))
+        } else {
+            Ok((&input[0..index], &input[index..]))
+        }
     }
 }
 pub fn take_while<F>(f: F) -> TakeWhile<F>
 where
-    F: Fn(char) -> bool,
+    F: Fn(u8) -> bool,
 {
     TakeWhile(f)
 }
@@ -147,7 +145,7 @@ where
 {
     type Output<'s> = C;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         let (element, mut remainder) = self.parser.parse(input)?;
         let mut elements = C::default();
         elements.extend(Some(element));
@@ -175,7 +173,7 @@ where
 {
     type Output<'s> = A;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         let mut accumulator = self.initial.clone();
         let mut remainder = input;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
@@ -194,7 +192,7 @@ where
 {
     type Output<'s> = A;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         let mut accumulator = self.initial.clone();
         let mut remainder = input;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
@@ -211,7 +209,7 @@ where
 {
     type Output<'s> = P::Output<'s>;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         let (mut last_value, mut remainder) = self.parser.parse(input)?;
         while let Ok((value, new_remainder)) = self.parser.parse(remainder) {
             last_value = value;
@@ -224,7 +222,7 @@ where
 impl<P: Parser, C: Default + for<'s> Extend<P::Output<'s>>> Parser for RepeatInto<P, C> {
     type Output<'s> = C;
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         let mut c = C::default();
 
         let (first_value, mut remainder) = self.parser.parse(input)?;
@@ -240,7 +238,7 @@ impl<P: Parser, C: Default + for<'s> Extend<P::Output<'s>>> Parser for RepeatInt
 impl<P: Parser, const N: usize> Parser for Many<P, N> {
     type Output<'s> = [P::Output<'s>; N];
 
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>> {
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>> {
         struct PartiallyInit<T, const N: usize> {
             memory: [MaybeUninit<T>; N],
             count: usize,

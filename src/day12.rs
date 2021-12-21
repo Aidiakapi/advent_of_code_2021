@@ -15,7 +15,7 @@ const MAX_NODE_COUNT: usize = 32;
 #[derive(Debug)]
 struct Input {
     edges: Jagged2<Node>,
-    _names: Vec<String>,
+    _names: Vec<Vec<u8>>,
 }
 
 fn get_row(edges: &Jagged2<Node>, node: Node) -> &[Node] {
@@ -86,31 +86,31 @@ fn get_edges<'s>(edges: &'s Vec<(Node, Node)>, node: Node) -> impl Iterator<Item
     })
 }
 
-fn parse(input: &str) -> ParseResult<Input> {
+fn parse(input: &[u8]) -> ParseResult<Input> {
     use parsers::*;
     let names = RefCell::new(vec![
-        (START_NODE, "start".to_owned()),
-        (END_NODE, "end".to_owned()),
+        (START_NODE, b"start".to_vec()),
+        (END_NODE, b"end".to_vec()),
     ]);
-    let node = take_while(|c| c.is_ascii_alphabetic()).map(|str| {
+    let node = take_while(|c| matches!(c, b'A'..=b'Z' | b'a'..=b'z')).map(|str| {
         let mut names = names.borrow_mut();
         match names.iter().find(|(_, x)| *x == str) {
             Some((idx, _)) => *idx,
             None => {
                 let mut idx = names.len() as Node;
                 assert!((idx & NODE_IS_LARGE) == 0);
-                if str.chars().all(|c| c.is_ascii_uppercase()) {
+                if str.iter().all(|&c| matches!(c, b'A'..=b'Z')) {
                     idx |= NODE_IS_LARGE;
                 }
-                names.push((idx, str.to_owned()));
+                names.push((idx, str.to_vec()));
                 idx
             }
         }
     });
     let edges = node
         .clone()
-        .and(token('-').then(node))
-        .sep_by::<_, Vec<(Node, Node)>>(token('\n'));
+        .and(token(b'-').then(node))
+        .sep_by::<_, Vec<(Node, Node)>>(token(b'\n'));
     edges
         .map(|edges: Vec<_>| {
             let names = {

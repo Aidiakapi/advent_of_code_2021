@@ -71,16 +71,16 @@ where
     pt1::<{ N * 5 }>(&full_grid)
 }
 
-fn parse<const N: usize>(input: &str) -> ParseResult<Grid<N>>
+fn parse<const N: usize>(input: &[u8]) -> ParseResult<Grid<N>>
 where
     [(); N * N]:,
 {
     use parsers::{special::grid, *};
-    grid(token('\n'), digit(), |x, y, v| Some((x, y, v))).parse(input)
+    grid(token(b'\n'), digit(), |x, y, v| Some((x, y, v))).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 1163751742
 1381373672
 2136511328

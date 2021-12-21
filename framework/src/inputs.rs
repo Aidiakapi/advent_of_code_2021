@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::{
+    io::Read,
     path::Path,
     time::{Duration, Instant},
 };
@@ -17,11 +18,12 @@ impl Inputs {
         Default::default()
     }
 
-    pub fn get(&mut self, day: u32) -> Result<String> {
+    pub fn get(&mut self, day: u32) -> Result<Vec<u8>> {
         let path = format!("./inputs/{day:0>2}.txt");
         let path = Path::new(&path);
-        if let Ok(input) = std::fs::read_to_string(&path) {
-            return Ok(input.replace("\r\n", "\n"));
+        if let Ok(mut input) = std::fs::read(&path) {
+            input.retain(|c| *c != b'\r');
+            return Ok(input);
         }
 
         let input = self.download(day)?;
@@ -37,7 +39,7 @@ impl Inputs {
         Ok(self.session_key.as_ref().unwrap())
     }
 
-    fn download(&mut self, day: u32) -> Result<String> {
+    fn download(&mut self, day: u32) -> Result<Vec<u8>> {
         let session_key = self.get_session_key()?;
         let cookie_values = format!("session={session_key}");
 
@@ -55,6 +57,8 @@ impl Inputs {
             .timeout(Duration::from_secs(5))
             .call()?;
 
-        Ok(resp.into_string()?)
+        let mut buf = Vec::new();
+        resp.into_reader().read_to_end(&mut buf)?;
+        Ok(buf)
     }
 }

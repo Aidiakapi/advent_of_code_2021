@@ -116,12 +116,12 @@ fn pt2(input: &Input) -> usize {
     enhance_n_times(input, 50)
 }
 
-fn parse(input: &str) -> ParseResult<Input> {
+fn parse(input: &[u8]) -> ParseResult<Input> {
     use parsers::{special::grid, *};
-    let bit = token(('.', false)).or(token(('#', true)));
+    let bit = token((b'.', false)).or(token((b'#', true)));
     let pattern = bit.clone().repeat_into();
     let image =
-        grid(token('\n'), bit, |x, y, v| Some((x, y, v))).map(|(width, data): (usize, BitVec)| {
+        grid(token(b'\n'), bit, |x, y, v| Some((x, y, v))).map(|(width, data): (usize, BitVec)| {
             Image {
                 width,
                 data,
@@ -130,14 +130,14 @@ fn parse(input: &str) -> ParseResult<Input> {
         });
 
     pattern
-        .trailed(token("\n\n"))
+        .trailed(token(b"\n\n"))
         .and(image)
         .map(|(pattern, image)| Input { pattern, image })
         .parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 ..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..##\
 #..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###\
 .######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#.\

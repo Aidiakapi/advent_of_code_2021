@@ -161,22 +161,22 @@ fn pt2(area: &Area) -> usize {
         .sum::<usize>()
 }
 
-fn parse(input: &str) -> ParseResult<Area> {
+fn parse(input: &[u8]) -> ParseResult<Area> {
     use parsers::*;
     let range = number_i32
-        .trailed(token(".."))
+        .trailed(token(b".."))
         .and(number_i32)
         .map(|(x, y)| x..y + 1);
-    token("target area: x=")
+    token(b"target area: x=")
         .then(range)
-        .trailed(token(", y="))
+        .trailed(token(b", y="))
         .and(range)
         .map(|(xs, ys)| Area { xs, ys })
         .parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "target area: x=20..30, y=-10..-5";
+    const EXAMPLE: &'static [u8] = b"target area: x=20..30, y=-10..-5";
 
     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 45);
     simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 112);

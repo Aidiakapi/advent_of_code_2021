@@ -86,17 +86,17 @@ fn pt2(input: &[Line]) -> usize {
     count_overlapping_points(input.iter())
 }
 
-fn parse(input: &str) -> ParseResult<Vec<Line>> {
+fn parse(input: &[u8]) -> ParseResult<Vec<Line>> {
     use parsers::*;
-    let coord = number_usize.trailed(token(',')).and(number_usize);
+    let coord = number_usize.trailed(token(b',')).and(number_usize);
     let coord = coord.map(|(x, y)| Vec2i::from((x as isize, y as isize)));
-    let line = coord.trailed(token(" -> ")).and(coord);
+    let line = coord.trailed(token(b" -> ")).and(coord);
     let line = line.map(|(from, to)| Line { from, to });
-    line.sep_by(token('\n')).parse(input)
+    line.sep_by(token(b'\n')).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 0,9 -> 5,9
 8,0 -> 0,8
 9,4 -> 3,4

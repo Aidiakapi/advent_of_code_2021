@@ -11,5 +11,5 @@ pub use multi::{ParserMultiExt, take_while};
 
 pub trait Parser {
     type Output<'s>;
-    fn parse<'s>(&self, input: &'s str) -> ParseResult<'s, Self::Output<'s>>;
+    fn parse<'s>(&self, input: &'s [u8]) -> ParseResult<'s, Self::Output<'s>>;
 }

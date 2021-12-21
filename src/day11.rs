@@ -71,13 +71,13 @@ fn pt2(input: &Grid) -> usize {
     unreachable!();
 }
 
-fn parse(input: &str) -> ParseResult<Grid> {
+fn parse(input: &[u8]) -> ParseResult<Grid> {
     use parsers::{special::grid, *};
-    grid(token('\n'), digit(), |x, y, v| Some((x, y, v))).parse(input)
+    grid(token(b'\n'), digit(), |x, y, v| Some((x, y, v))).parse(input)
 }
 
 tests! {
-    const EXAMPLE: &'static str = "\
+    const EXAMPLE: &'static [u8] = b"\
 5483143223
 2745854711
 5264556173
