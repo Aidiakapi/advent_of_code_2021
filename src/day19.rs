@@ -1,8 +1,6 @@
-use std::{fmt::Display, ops::Mul};
-
-use ahash::AHashSet;
-
 use crate::prelude::*;
+use ahash::AHashSet;
+use std::{fmt::Display, ops::Mul};
 
 day!(19, parse => pt1, pt2);
 
@@ -115,6 +113,35 @@ const fn compute_all_transforms() -> [Matrix; 24] {
 }
 
 const ALL_TRANSFORMS: [Matrix; 24] = compute_all_transforms();
+
+// So, I expected this to be faster than actually doing the matrix multiplications
+// but after measuring, this changed the runtime from approx 800ms to 930ms.
+// const TRANSFORMATIONS: [fn(Vec3) -> Vec3; 24] = #[rustfmt::skip] [
+//     |v| Vec3 { x:  v.x, y:  v.y, z:  v.z },
+//     |v| Vec3 { x:  v.x, y:  v.z, z: -v.y },
+//     |v| Vec3 { x:  v.x, y: -v.y, z: -v.z },
+//     |v| Vec3 { x:  v.x, y: -v.z, z:  v.y },
+//     |v| Vec3 { x:  v.y, y:  v.x, z: -v.z },
+//     |v| Vec3 { x:  v.y, y:  v.z, z:  v.x },
+//     |v| Vec3 { x:  v.y, y: -v.x, z:  v.z },
+//     |v| Vec3 { x:  v.y, y: -v.z, z: -v.x },
+//     |v| Vec3 { x:  v.z, y:  v.x, z:  v.y },
+//     |v| Vec3 { x:  v.z, y:  v.y, z: -v.x },
+//     |v| Vec3 { x:  v.z, y: -v.x, z: -v.y },
+//     |v| Vec3 { x:  v.z, y: -v.y, z:  v.x },
+//     |v| Vec3 { x: -v.x, y:  v.y, z: -v.z },
+//     |v| Vec3 { x: -v.x, y:  v.z, z:  v.y },
+//     |v| Vec3 { x: -v.x, y: -v.y, z:  v.z },
+//     |v| Vec3 { x: -v.x, y: -v.z, z: -v.y },
+//     |v| Vec3 { x: -v.y, y:  v.x, z:  v.z },
+//     |v| Vec3 { x: -v.y, y:  v.z, z: -v.x },
+//     |v| Vec3 { x: -v.y, y: -v.x, z: -v.z },
+//     |v| Vec3 { x: -v.y, y: -v.z, z:  v.x },
+//     |v| Vec3 { x: -v.z, y:  v.x, z: -v.y },
+//     |v| Vec3 { x: -v.z, y:  v.y, z:  v.x },
+//     |v| Vec3 { x: -v.z, y: -v.x, z:  v.y },
+//     |v| Vec3 { x: -v.z, y: -v.y, z: -v.x },
+// ];
 
 fn determine_beacon_position(
     points: &AHashSet<Vec3>,

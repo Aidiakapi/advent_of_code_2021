@@ -134,7 +134,7 @@ fn parse(input: &[u8]) -> ParseResult<Input> {
 }
 
 tests! {
-    const EXAMPLE1: &'static str = "\
+    const EXAMPLE1: &'static [u8] = b"\
 start-A
 start-b
 A-c
@@ -142,7 +142,7 @@ A-b
 b-d
 A-end
 b-end";
-    const EXAMPLE2: &'static str = "\
+    const EXAMPLE2: &'static [u8] = b"\
 dc-end
 HN-start
 start-kj
@@ -153,7 +153,7 @@ HN-end
 kj-sa
 kj-HN
 kj-dc";
-    const EXAMPLE3: &'static str = "\
+    const EXAMPLE3: &'static [u8] = b"\
 fs-end
 he-DX
 fs-he
