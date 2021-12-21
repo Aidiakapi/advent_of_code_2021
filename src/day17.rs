@@ -163,9 +163,9 @@ fn pt2(area: &Area) -> usize {
 
 fn parse(input: &[u8]) -> ParseResult<Area> {
     use parsers::*;
-    let range = number_i32
+    let range = number::<i32>()
         .trailed(token(b".."))
-        .and(number_i32)
+        .and(number::<i32>())
         .map(|(x, y)| x..y + 1);
     token(b"target area: x=")
         .then(range)

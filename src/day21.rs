@@ -106,9 +106,9 @@ fn pt2(input: &(u8, u8)) -> u64 {
 fn parse(input: &[u8]) -> ParseResult<(u8, u8)> {
     use parsers::*;
     token(b"Player 1 starting position: ")
-        .then(number_u8)
+        .then(number::<u8>())
         .trailed(token(b"\nPlayer 2 starting position: "))
-        .and(number_u8)
+        .and(number::<u8>())
         .parse(input)
 }
 

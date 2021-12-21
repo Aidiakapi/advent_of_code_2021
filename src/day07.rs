@@ -57,7 +57,7 @@ fn get_score(input: &[u32], position: u32) -> u32 {
 
 fn parse(input: &[u8]) -> ParseResult<Vec<u32>> {
     use parsers::*;
-    number_u32.sep_by(token(b',')).parse(input)
+    number::<u32>().sep_by(token(b',')).parse(input)
 }
 
 tests! {

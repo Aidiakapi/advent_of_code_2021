@@ -211,13 +211,13 @@ fn pt2(input: &[ScanData]) -> Int {
 fn parse(input: &[u8]) -> ParseResult<Vec<ScanData>> {
     use parsers::*;
     let header = token(b"--- scanner ")
-        .then(number_usize)
+        .then(number::<usize>())
         .trailed(token(b" ---\n"));
-    let coord = number_i32
+    let coord = number::<i32>()
         .trailed(token(b','))
-        .and(number_i32)
+        .and(number::<i32>())
         .trailed(token(b','))
-        .and(number_i32)
+        .and(number::<i32>())
         .map(|((x, y), z)| Vec3 { x, y, z });
     let coords = coord.sep_by(token(b'\n'));
 

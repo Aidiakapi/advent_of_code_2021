@@ -22,7 +22,7 @@ fn pt2(input: &[u32]) -> usize {
 
 fn parse(input: &[u8]) -> ParseResult<Vec<u32>> {
     use parsers::*;
-    number_u32.sep_by(token(b'\n')).parse(input)
+    number::<u32>().sep_by(token(b'\n')).parse(input)
 }
 
 tests! {

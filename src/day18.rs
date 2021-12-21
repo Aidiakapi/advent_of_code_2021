@@ -191,7 +191,7 @@ fn parse(input: &[u8]) -> ParseResult<Vec<SnailfishNr>> {
     let part = token((b'[', Part::OpenBracket))
         .or(token((b',', Part::Separator)))
         .or(token((b']', Part::CloseBracket)))
-        .or(number_u8.map(Part::Number));
+        .or(number::<u8>().map(Part::Number));
     part.repeat_into()
         .map(|parts| SnailfishNr { parts })
         .sep_by(token(b'\n'))

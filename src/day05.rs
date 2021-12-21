@@ -88,7 +88,7 @@ fn pt2(input: &[Line]) -> usize {
 
 fn parse(input: &[u8]) -> ParseResult<Vec<Line>> {
     use parsers::*;
-    let coord = number_usize.trailed(token(b',')).and(number_usize);
+    let coord = number::<usize>().trailed(token(b',')).and(number::<usize>());
     let coord = coord.map(|(x, y)| Vec2i::from((x as isize, y as isize)));
     let line = coord.trailed(token(b" -> ")).and(coord);
     let line = line.map(|(from, to)| Line { from, to });

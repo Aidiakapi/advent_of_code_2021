@@ -3,6 +3,7 @@
     allocator_api,
     associated_type_bounds,
     auto_traits,
+    const_fn_trait_bound,
     derive_default_enum,
     fn_traits,
     generic_associated_types,

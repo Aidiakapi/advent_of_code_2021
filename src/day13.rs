@@ -83,13 +83,13 @@ fn pt2(input: &Input) -> String {
 
 fn parse(input: &[u8]) -> ParseResult<Input> {
     use parsers::*;
-    let point = number_usize.and(token(b',').then(number_usize));
+    let point = number::<usize>().and(token(b',').then(number::<usize>()));
     let points = point.map(|(x, y)| Vec2u { x, y }).sep_by(token(b'\n'));
 
     let direction = token((b'x', Direction::X)).or(token((b'y', Direction::Y)));
     let fold = token(b"fold along ")
         .then(direction)
-        .and(token(b'=').then(number_usize));
+        .and(token(b'=').then(number::<usize>()));
     let folds = fold.sep_by(token(b'\n'));
 
     points

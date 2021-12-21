@@ -48,7 +48,7 @@ fn parse(input: &[u8]) -> ParseResult<Vec<Instruction>> {
     let direction = token((b"forward ", Direction::Forward))
         .or(token((b"down ", Direction::Down)))
         .or(token((b"up ", Direction::Up)));
-    let instruction = direction.and(number_u32);
+    let instruction = direction.and(number::<u32>());
     instruction.sep_by(token(b'\n')).parse(input)
 }
 

@@ -29,7 +29,7 @@ fn pt2(input: &[u64]) -> u64 {
 
 fn parse(input: &[u8]) -> ParseResult<Vec<u64>> {
     use parsers::*;
-    number_u64.sep_by(token(b',')).parse(input)
+    number::<u64>().sep_by(token(b',')).parse(input)
 }
 
 tests! {
