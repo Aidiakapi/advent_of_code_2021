@@ -117,26 +117,26 @@ mod test {
     #[test]
     #[rustfmt::skip]
     fn unsigned_numbers() {
-        assert_eq!( Ok((0,                         ""    )), number::<u8>().parse("0"    ));
-        assert_eq!( Ok((128,                       ""    )), number::<u8>().parse("128"  ));
-        assert_eq!( Ok((255,                       ""    )), number::<u8>().parse("255"  ));
-        assert_eq!( Ok((10,                        "abc" )), number::<u8>().parse("10abc"));
-        assert_eq!(Err((ParseError::Overflow,      "300" )), number::<u8>().parse("300"  ));
-        assert_eq!(Err((ParseError::Overflow,      "256a")), number::<u8>().parse("256a" ));
-        assert_eq!(Err((ParseError::EmptyInput,    ""    )), number::<u8>().parse(""     ));
-        assert_eq!(Err((ParseError::ExpectedDigit, "-1"  )), number::<u8>().parse("-1"   ));
+        assert_eq!( Ok((0,                         &b""    [..])), number::<u8>().parse(b"0"    ));
+        assert_eq!( Ok((128,                       &b""    [..])), number::<u8>().parse(b"128"  ));
+        assert_eq!( Ok((255,                       &b""    [..])), number::<u8>().parse(b"255"  ));
+        assert_eq!( Ok((10,                        &b"abc" [..])), number::<u8>().parse(b"10abc"));
+        assert_eq!(Err((ParseError::Overflow,      &b"300" [..])), number::<u8>().parse(b"300"  ));
+        assert_eq!(Err((ParseError::Overflow,      &b"256a"[..])), number::<u8>().parse(b"256a" ));
+        assert_eq!(Err((ParseError::EmptyInput,    &b""    [..])), number::<u8>().parse(b""     ));
+        assert_eq!(Err((ParseError::ExpectedDigit, &b"-1"  [..])), number::<u8>().parse(b"-1"   ));
     }
 
     #[test]
     #[rustfmt::skip]
     fn signed_numbers() {
-        assert_eq!( Ok((0,                         ""    )), number::<i8>().parse("0"    ));
-        assert_eq!( Ok((127,                       ""    )), number::<i8>().parse("127"  ));
-        assert_eq!( Ok((127,                       ""    )), number::<i8>().parse("+127" ));
-        assert_eq!( Ok((-128,                      ""    )), number::<i8>().parse("-128" ));
-        assert_eq!( Ok((10,                        "abc" )), number::<i8>().parse("10abc"));
-        assert_eq!(Err((ParseError::Overflow,      "+128")), number::<i8>().parse("+128" ));
-        assert_eq!(Err((ParseError::Overflow,      "-129")), number::<i8>().parse("-129" ));
-        assert_eq!(Err((ParseError::EmptyInput,    ""    )), number::<i8>().parse(""     ));
+        assert_eq!( Ok((0,                         &b""    [..])), number::<i8>().parse(b"0"    ));
+        assert_eq!( Ok((127,                       &b""    [..])), number::<i8>().parse(b"127"  ));
+        assert_eq!( Ok((127,                       &b""    [..])), number::<i8>().parse(b"+127" ));
+        assert_eq!( Ok((-128,                      &b""    [..])), number::<i8>().parse(b"-128" ));
+        assert_eq!( Ok((10,                        &b"abc" [..])), number::<i8>().parse(b"10abc"));
+        assert_eq!(Err((ParseError::Overflow,      &b"+128"[..])), number::<i8>().parse(b"+128" ));
+        assert_eq!(Err((ParseError::Overflow,      &b"-129"[..])), number::<i8>().parse(b"-129" ));
+        assert_eq!(Err((ParseError::EmptyInput,    &b""    [..])), number::<i8>().parse(b""     ));
     }
 }
