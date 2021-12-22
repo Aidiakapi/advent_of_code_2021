@@ -1,6 +1,6 @@
 {
     "day": {
         "prefix": "day",
-        "body": "use crate::prelude::*;\n\nday!(${1}, parse => pt1, pt2);\n\nfn pt1(input: &[${2:usize}]) -> Result<!> {\n    Err(anyhow!(\"todo\"))\n}\n\nfn pt2(input: &[${2:usize}]) -> Result<!> {\n    Err(anyhow!(\"todo\"))\n}\n\nfn parse(input: &[u8]) -> ParseResult<Vec<${2:usize}>> {\n    use parsers::*;\n    ${3:Err((ParseError::Custom(\"todo\"), \"\"))}\n}\n\n// tests! {\n//     const EXAMPLE: &'static str = \"\\\n// \";\n\n//     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 7);\n//     // simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 5);\n// }\n"
+        "body": "use crate::prelude::*;\n\nday!(${1}, parse => pt1, pt2);\n\nfn pt1(input: &[${2:usize}]) -> Result<!> {\n    Err(anyhow!(\"todo\"))\n}\n\nfn pt2(input: &[${2:usize}]) -> Result<!> {\n    Err(anyhow!(\"todo\"))\n}\n\nfn parse(input: &[u8]) -> ParseResult<Vec<${2:usize}>> {\n    use parsers::*;\n    ${3:Err((ParseError::Custom(\"todo\"), \"\"))}\n}\n\n// tests! {\n//     const EXAMPLE: &'static [u8] = b\"\\\n// \";\n\n//     simple_tests!(parse, pt1, pt1_tests, EXAMPLE => 7);\n//     // simple_tests!(parse, pt2, pt2_tests, EXAMPLE => 5);\n// }\n"
     }
 }

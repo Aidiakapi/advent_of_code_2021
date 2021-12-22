@@ -37,6 +37,35 @@ impl<F, I: From<F>> From<Vec2<F>> for (I, I) {
     }
 }
 
+impl<T> Vec2<T> {
+    pub fn map<K, F: FnMut(T) -> K>(self, mut f: F) -> Vec2<K> {
+        Vec2 {
+            x: f(self.x),
+            y: f(self.y),
+        }
+    }
+}
+
+impl<T> Vec3<T> {
+    pub fn map<K, F: FnMut(T) -> K>(self, mut f: F) -> Vec3<K> {
+        Vec3 {
+            x: f(self.x),
+            y: f(self.y),
+            z: f(self.z),
+        }
+    }
+}
+
+impl<T: Clone> Vec3<T> {
+    pub fn new(value: T) -> Vec3<T> {
+        Vec3 {
+            x: value.clone(),
+            y: value.clone(),
+            z: value,
+        }
+    }
+}
+
 macro_rules! impl_vec_bin_ops {
     ($trait_name:ident, $trait_fn:ident, $assign_trait_name:ident, $assign_fn_name:ident) => {
         impl<T: $trait_name<Output = T>> $trait_name for Vec2<T> {
