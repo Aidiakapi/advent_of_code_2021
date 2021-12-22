@@ -69,14 +69,11 @@ impl Region {
 
         new_regions
     }
-}
 
-fn count_regions(active_regions: &[Region]) -> u64 {
-    active_regions
-        .iter()
-        .map(|region: &Region| region.max - region.min)
-        .map(|Vec3 { x, y, z }| x as u64 * y as u64 * z as u64)
-        .sum()
+    fn size(&self) -> u64 {
+        let d = self.max - self.min;
+        d.x as u64 * d.y as u64 * d.z as u64
+    }
 }
 
 fn count_overlap_size<I>(input: I) -> u64
@@ -120,7 +117,7 @@ where
         }
     }
 
-    count_regions(&active_regions)
+    active_regions.iter().map(Region::size).sum()
 }
 
 fn pt1(input: &[Instruction]) -> u64 {
@@ -146,7 +143,26 @@ fn pt1(input: &[Instruction]) -> u64 {
 }
 
 fn pt2(input: &[Instruction]) -> u64 {
-    count_overlap_size(input.iter().cloned())
+    fn sort(regions: &mut [Instruction]) {
+        regions.sort_unstable_by(|a, b| b.region.size().cmp(&a.region.size()));
+    }
+    fn partition_and_sort(regions: &mut [Instruction]) {
+        let current_region = match regions.first() {
+            Some(r) => r.turn_on,
+            None => return,
+        };
+        match regions.iter().position(|r| r.turn_on != current_region) {
+            Some(p) => {
+                let (a, b) = regions.split_at_mut(p);
+                sort(a);
+                partition_and_sort(b);
+            }
+            None => sort(regions),
+        }
+    }
+    let mut regions = input.to_vec();
+    partition_and_sort(&mut regions);
+    count_overlap_size(regions.iter().cloned())
 }
 
 fn parse(input: &[u8]) -> ParseResult<Vec<Instruction>> {
