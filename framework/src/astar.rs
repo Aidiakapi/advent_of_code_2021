@@ -6,11 +6,11 @@ use std::{
 };
 
 pub struct AStarInfo<N, C> {
-    pub path: Vec<N>,
+    pub path: Vec<(N, C)>,
     pub total_cost: C,
 }
 
-pub fn astar<N, C, NI, FN, FH, FC>(
+pub fn astar<N, C, FN, FH, FC>(
     start: N,
     mut next: FN,
     mut heuristic: FH,
@@ -19,8 +19,7 @@ pub fn astar<N, C, NI, FN, FH, FC>(
 where
     N: Clone + Hash + Eq,
     C: Ord + Copy + Add<Output = C> + Default,
-    NI: IntoIterator<Item = (N, C)>,
-    FN: FnMut(&N) -> NI,
+    FN: FnMut(&N, &mut Vec<(N, C)>),
     FH: FnMut(&N) -> C,
     FC: FnMut(&N) -> bool,
 {
@@ -56,16 +55,18 @@ where
         previous: None,
     });
     let mut visited = AHashMap::<N, (C, Option<N>)>::new();
+    let mut next_nodes = Vec::new();
     while let Some(entry) = pending.pop() {
         if is_target(&entry.node) {
             let total_cost = entry.cost;
             // Reconstruct path
             let mut path = Vec::new();
-            path.push(entry.node);
+            path.push((entry.node, total_cost));
             let mut previous = entry.previous;
             while let Some(node) = previous {
-                previous = visited.remove(&node).unwrap().1;
-                path.push(node);
+                let cost;
+                (cost, previous) = visited.remove(&node).unwrap();
+                path.push((node, cost));
             }
 
             path.reverse();
@@ -84,7 +85,8 @@ where
                 slot.insert((entry.cost, entry.previous.clone()));
             }
         }
-        for (next_node, next_cost) in next(&entry.node) {
+        next(&entry.node, &mut next_nodes);
+        for (next_node, next_cost) in next_nodes.drain(..) {
             let cost = entry.cost + next_cost;
             pending.push(Pending {
                 cost,
@@ -97,7 +99,7 @@ where
     None
 }
 
-pub fn astar_no_path<N, C, NI, FN, FH, FC>(
+pub fn astar_no_path<N, C, FN, FH, FC>(
     start: N,
     mut next: FN,
     mut heuristic: FH,
@@ -106,8 +108,7 @@ pub fn astar_no_path<N, C, NI, FN, FH, FC>(
 where
     N: Clone + Hash + Eq,
     C: Ord + Copy + Add<Output = C> + Default,
-    NI: IntoIterator<Item = (N, C)>,
-    FN: FnMut(&N) -> NI,
+    FN: FnMut(&N, &mut Vec<(N, C)>),
     FH: FnMut(&N) -> C,
     FC: FnMut(&N) -> bool,
 {
@@ -141,6 +142,7 @@ where
         node: start,
     });
     let mut visited = AHashMap::<N, C>::new();
+    let mut next_nodes = Vec::new();
     while let Some(entry) = pending.pop() {
         if is_target(&entry.node) {
             return Some(entry.cost);
@@ -157,7 +159,8 @@ where
                 slot.insert(entry.cost);
             }
         }
-        for (next_node, next_cost) in next(&entry.node) {
+        next(&entry.node, &mut next_nodes);
+        for (next_node, next_cost) in next_nodes.drain(..) {
             let cost = entry.cost + next_cost;
             pending.push(Pending {
                 cost,

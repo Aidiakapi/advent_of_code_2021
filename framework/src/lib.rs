@@ -5,6 +5,7 @@
     auto_traits,
     const_fn_trait_bound,
     derive_default_enum,
+    destructuring_assignment,
     fn_traits,
     generic_associated_types,
     generic_const_exprs,

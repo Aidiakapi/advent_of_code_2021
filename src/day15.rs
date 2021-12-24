@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use arrayvec::ArrayVec;
 use framework::astar::astar_no_path;
 
 day!(15, parse::<100> => pt1::<100>, pt2::<100>);
@@ -13,8 +12,7 @@ where
 {
     astar_no_path(
         Vec2u::default(),
-        |p: &Vec2u| {
-            let mut neighbors = ArrayVec::<(Vec2u, Cost), 4>::new();
+        |p: &Vec2u, neighbors| {
             let mut add_pos = |x: usize, y: usize| {
                 neighbors.push((Vec2u { x, y }, input[x][y] as Cost));
             };
@@ -30,7 +28,6 @@ where
             if p.y != N - 1 {
                 add_pos(p.x, p.y + 1);
             }
-            neighbors
         },
         |p: &Vec2u| (p.x.abs_diff(N - 1) + p.y.abs_diff(N - 1)) as Cost,
         |p: &Vec2u| p.x == N - 1 && p.y == N - 1,
