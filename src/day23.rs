@@ -3,7 +3,6 @@ use framework::astar::astar_no_path;
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
-    mem::transmute,
 };
 
 day!(23, parse => pt1, pt2);
@@ -19,13 +18,12 @@ enum Amphipod {
     Desert,
 }
 
-impl From<usize> for Amphipod {
-    fn from(n: usize) -> Self {
-        debug_assert!(n < 4);
-        unsafe { transmute(n as u8) }
-    }
-}
-
+const AMPHIPODS: [Amphipod; 4] = [
+    Amphipod::Amber,
+    Amphipod::Bronze,
+    Amphipod::Copper,
+    Amphipod::Desert,
+];
 const COSTS: [Cost; 4] = [1, 10, 100, 1000];
 
 // #############
@@ -129,37 +127,6 @@ where
         }
     }
 
-    fn heuristic(&self) -> Cost {
-        let mut total_cost = 0;
-        for (amphipod, &missing_count) in self.missing_counts.iter().enumerate() {
-            for position in 0..missing_count as usize {
-                let other_amphipod = match self.rooms[amphipod + position] {
-                    Some(a) => a as usize,
-                    None => continue,
-                };
-                // NOTE: We do not count the Y-moves to fall into the other slot, because of a
-                // trick used down below, that adds all the correct number of drops for all the
-                // missing items.
-                let y_cost = position as Cost;
-                let x_cost = (amphipod as Cost).abs_diff(other_amphipod as Cost) * 2;
-                let cost = (x_cost + y_cost) * COSTS[other_amphipod];
-                total_cost += cost;
-            }
-            // This is the total moves "down" into the rooms, in order to full it up
-            total_cost += ((missing_count * (missing_count + 1)) / 2) as Cost * COSTS[amphipod];
-        }
-        total_cost += self
-            .hallway
-            .iter()
-            .enumerate()
-            .filter_map(|(i, a)| a.map(|a| (i, a)))
-            .map(|(i, a): (usize, Amphipod)| {
-                (HALLWAY_MOVEMENT[a as usize][i] & !MOVE_RIGHT_BIT) as Cost * COSTS[a as usize]
-            })
-            .sum::<Cost>();
-        total_cost
-    }
-
     fn is_solution(&self) -> bool {
         self.missing_counts == [0, 0, 0, 0]
     }
@@ -170,7 +137,7 @@ where
             self.missing_counts[amphipod] = DEPTH as u8
                 - (0..DEPTH)
                     .rev()
-                    .take_while(|&i| self.rooms[base + i] == Some(amphipod.into()))
+                    .take_while(|&i| self.rooms[base + i] == Some(AMPHIPODS[amphipod]))
                     .count() as u8;
         }
     }
@@ -230,7 +197,7 @@ where
     astar_no_path(
         input,
         Positions::next_positions,
-        Positions::heuristic,
+        |_| 0,
         Positions::is_solution,
     )
     .ok_or(anyhow!("no solution"))
