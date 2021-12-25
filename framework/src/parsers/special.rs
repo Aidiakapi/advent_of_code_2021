@@ -1,7 +1,7 @@
 use super::*;
 use crate::array::init_boxed_array;
 use bitvec::prelude::*;
-use std::marker::PhantomData;
+use std::{fmt::Display, marker::PhantomData};
 
 pub trait GridSpec<T> {
     type Intermediate;
@@ -67,6 +67,69 @@ impl GridSpec<bool> for (usize, BitVec) {
 
     fn finalize(data: Self::Intermediate) -> Self {
         (data.0, data.2)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DynGrid<T: Default> {
+    pub data: Vec<T>,
+    pub width: usize,
+}
+
+impl<T: Display + Default> Display for DynGrid<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let height = self.data.len() / self.width;
+        for y in 0..height {
+            let base = y * self.width;
+            for x in 0..self.width {
+                self.data[base + x].fmt(f)?;
+            }
+            if y != height - 1 {
+                write!(f, "\n")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl<T: Default> GridSpec<T> for DynGrid<T> {
+    type Intermediate = (usize, bool, Vec<T>);
+
+    fn initialize() -> Self::Intermediate {
+        (0, false, Vec::new())
+    }
+
+    fn set(
+        (width, locked_width, data): &mut Self::Intermediate,
+        x: usize,
+        y: usize,
+        value: T,
+    ) -> Result<(), ()> {
+        if *locked_width {
+            if x >= *width {
+                return Err(());
+            }
+        } else if y == 0 {
+            if x >= *width {
+                data.resize_with(x + 1, Default::default);
+                *width = x + 1;
+            }
+        } else {
+            *locked_width = true;
+        }
+        let min_size = *width * (y + 1);
+        if data.len() < min_size {
+            data.resize_with(min_size, Default::default);
+        }
+        data[y * *width + x] = value;
+        Ok(())
+    }
+
+    fn finalize(data: Self::Intermediate) -> Self {
+        DynGrid {
+            data: data.2,
+            width: data.0,
+        }
     }
 }
 

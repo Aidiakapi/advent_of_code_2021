@@ -5,6 +5,7 @@
     const_trait_impl,
     const_fn_fn_ptr_basics,
     const_mut_refs,
+    derive_default_enum,
     int_abs_diff,
     generic_const_exprs,
     never_type,
@@ -38,4 +39,5 @@ framework::main!(
     day21,
     day22,
     day23,
+    day25,
 );
