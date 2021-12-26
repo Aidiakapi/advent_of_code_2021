@@ -15,6 +15,7 @@
 )]
 
 mod prelude;
+mod ocr;
 
 framework::main!(
     day01,

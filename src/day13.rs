@@ -78,7 +78,8 @@ fn pt2(input: &Input) -> String {
         fold_paper(points.iter().cloned(), &mut temp, fold);
         swap(&mut temp, &mut points);
     }
-    paper_to_string(&points)
+    crate::ocr::recognize_from_contains(|x, y| points.contains(&Vec2 { x, y }))
+        .unwrap_or_else(|| paper_to_string(&points))
 }
 
 fn parse(input: &[u8]) -> ParseResult<Input> {
