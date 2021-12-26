@@ -1,0 +1,70 @@
+ 1  inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w       inp w
+Read input
+
+
+ 2  mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0     mul x 0
+ 3  add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z     add x z
+ 4  mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26    mod x 26
+ 6  add x 12    add x 10    add x 13    add x -11   add x 13    add x -1    add x 10    add x 11    add x 0     add x 10    add x -5    add x -16   add x -7    add x -11
+
+X = Z % 26 + C1
+
+ 7  eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w     eql x w
+ 8  eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0     eql x 0
+ 
+X = (Z % 26 + C1) != W
+X => 0 or 1
+
+ 9  mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0
+10  add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25    add y 25
+11  mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x
+12  add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1     add y 1
+ 5  div z 1     div z 1     div z 1     div z 26    div z 1     div z 26    div z 1     div z 1     div z 26    div z 1     div z 26    div z 26    div z 26    div z 26
+13  mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y     mul z y
+
+Y = 25 * X + 1
+Z = Z / C0 * (25 * X + 1)
+where C0 == 1 or 26
+
+combined, this means that Z is one of 2 cases:
+(X, C0 == 26)
+(0, 0) => Z = Z
+(0, 1) => Z = Z / 26
+(1, 0) => Z = Z * 26
+(1, 1) => Z = Z
+
+14  mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0     mul y 0
+15  add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w     add y w
+16  add y 6     add y 6     add y 3     add y 11    add y 9     add y 3     add y 13    add y 6     add y 14    add y 10    add y 12    add y 10    add y 11    add y 15
+17  mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x     mul y x
+18  add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y     add z y
+
+Y = (W + C2) * X
+Z = Z + (W + C2) * X
+
+full combination:
+(X, C0 == 26)
+(0, 0) => Z = Z
+(0, 1) => Z = Z / 26
+(1, 0) => Z = Z      * 26 + W + C2
+(1, 1) => Z = Z / 26 * 26 + W + C2
+
+Important observations:
+There are 7 columns for which X will always be 1, because C1 >= 10.
+Each of these columns in addition, divides Z / 1 (no-op), whereas the other 7
+columns, divide Z / 26.
+If X is 1, Z will be incremented with 26 + W + C2, which is always positive.
+
+This means there are 7 columns which always execute the following:
+Z = Z * 26 + some non-zero positive integer
+
+Then there are the 7 other columns (the ones with div z 26), which will also
+execute that when (Z % 26 + C1) != W.
+In order to reach Z == 0, these columns may NEVER execute it, and hence must
+have the digit Z % 26 + C1. However, W is also restricted to range [1, 9], and
+so it's possible that there is no possible digit.
+
+The result of this is that since we must select a specific digit for each of 7
+columns, our maximum size of the search space is reduced from 9^14, to O(9^7).
+Not only is that a number easily within brute-force range, in reality, there are
+many early-out opportunities when no digit can be selected.
