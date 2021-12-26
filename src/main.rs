@@ -1,5 +1,6 @@
 #![allow(incomplete_features)]
 #![feature(
+    adt_const_params,
     array_windows,
     const_for,
     const_trait_impl,
@@ -39,5 +40,6 @@ framework::main!(
     day21,
     day22,
     day23,
+    day24,
     day25,
 );
